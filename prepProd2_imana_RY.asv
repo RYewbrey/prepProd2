@@ -4419,11 +4419,11 @@ switch(what)
         
     case 'PCM_fitModels_PrepxProd' %main PCM script - fits models to data (4 sequences x prepProd)
         
-        prepProdSimu_loadModels(modelDir)
+        models = prepProdSimu_loadModels(modelDir);
         
         %         anaSubj = [3, 5, 6, 7, 9];
         
-        for r=3%1:length(subcortStructs)
+        for r=1:length(subcortStructs)
             %         for r=6;
             
             disp(['analysing ' subcortStructs{r}])
@@ -4446,7 +4446,7 @@ switch(what)
                 c=repmat(1:8,1,nrruns)'; % extract conditions (leave out errors!)
                 run=[1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
                 
-                prepProdSimu_prepModels(mo
+                [M, R] = prepProdSimu_prepModels(models,run,c);
                 
                 [~,prepCol] = find(prep>0); prepCol = reshape(prepCol,4,[]);
                 [~,prodCol] = find(prod>0); prodCol = reshape(prodCol,4,[]);
@@ -4510,129 +4510,40 @@ switch(what)
             
             % visualise models
             subplot(3,7,2);
-            imagesc(orderPrepModel.G);
+            imagesc(R.orderPrepModel.G);
             title('Order Prep')
             
             subplot(3,7,9);
-            imagesc(orderProdModel.G);
+            imagesc(R.orderProdModel.G);
             title('Order Prod')
             
             subplot(3,7,16);
-            imagesc(orderMaintModel.G);
+            imagesc(R.orderMaintModel.G);
             title('Order Maint')
             
             subplot(3,7,3);
-            imagesc(timingPrepModel.G);
+            imagesc(R.timingPrepModel.G);
             title('Timing Prep')
             
             subplot(3,7,10);
-            imagesc(timingProdModel.G);
+            imagesc(R.timingProdModel.G);
             title('Timing Prod')
             
             subplot(3,7,17);
-            imagesc(timingMaintModel.G);
+            imagesc(R.timingMaintModel.G);
             title('Timing Maint')
             
             subplot(3,7,4);
-            imagesc(integratedPrepModel.G);
+            imagesc(R.integratedPrepModel.G);
             title('Integrated Prep')
             
             subplot(3,7,11);
-            imagesc(integratedProdModel.G);
+            imagesc(R.integratedProdModel.G);
             title('Integrated Prod')
             
             subplot(3,7,18);
-            imagesc(integratedMaintModel.G);
+            imagesc(R.integratedMaintModel.G);
             title('Integrated Maint')
-            
-            % ----------------------------------------------------------------
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = ones(8);
-            M{1}.name       = 'null';
-            
-            % Models 2-4: Order models, derived from simulations with
-            % high order decoding during prep, prod, & switch respectively
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = orderPrepModel.G;
-            M{2}.name       = 'ordPrep';
-            
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = orderProdModel.G;
-            M{3}.name       = 'ordProd';
-            
-            M{4}.type       = 'component';
-            M{4}.numGparams = 1;
-            M{4}.Gc         = orderMaintModel.G;
-            M{4}.name       = 'ordSwitch';
-            
-            % Models 5-7: Timing models, derived from simulations with
-            % high timing decoding during prep, prod, & switch respectively
-            M{5}.type       = 'component';
-            M{5}.numGparams = 1;
-            M{5}.Gc         = timingPrepModel.G;
-            M{5}.name       = 'timPrep';
-            
-            M{6}.type       = 'component';
-            M{6}.numGparams = 1;
-            M{6}.Gc         = timingProdModel.G;
-            M{6}.name       = 'timProd';
-            
-            M{7}.type       = 'component';
-            M{7}.numGparams = 1;
-            M{7}.Gc         = timingMaintModel.G;
-            M{7}.name       = 'timSwitch';
-            
-            % Models 8-10: Integrated models, derived from simulations with
-            % high integrated decoding
-            M{8}.type       = 'component';
-            M{8}.numGparams = 1;
-            M{8}.Gc         = integratedPrepModel.G;
-            M{8}.name       = 'intPrep';
-            
-            M{9}.type       = 'component';
-            M{9}.numGparams = 1;
-            M{9}.Gc         = integratedProdModel.G;
-            M{9}.name       = 'intProd';
-            
-            M{10}.type       = 'component';
-            M{10}.numGparams = 1;
-            M{10}.Gc         = integratedMaintModel.G;
-            M{10}.name       = 'intSwitch';
-            
-            % Model 11: Additive mixture between timing prep and prod models
-            M{11}.type       = 'component';
-            M{11}.numGparams = 2;
-            M{11}.Gc(:,:,1)  = orderPrepModel.G;
-            M{11}.Gc(:,:,2)  = orderProdModel.G;
-            M{11}.name       = 'ordPrep+Prod';
-            
-            % Model 12: Additive mixture between order prep and prod models
-            M{12}.type       = 'component';
-            M{12}.numGparams = 2;
-            M{12}.Gc(:,:,1)  = timingPrepModel.G;
-            M{12}.Gc(:,:,2)  = timingProdModel.G;
-            M{12}.name       = 'timPrep+Prod';
-            
-            % Model 12: Additive mixture between integrated prep and prod models
-            M{13}.type       = 'component';
-            M{13}.numGparams = 2;
-            M{13}.Gc(:,:,1)  = integratedPrepModel.G;
-            M{13}.Gc(:,:,2)  = integratedProdModel.G;
-            M{13}.name       = 'intPrep+Prod';
-            
-            % Model 14: Free model as Noise ceiling
-            M{14}.type       = 'freedirect';
-            M{14}.numCond    = 8;
-            M{14}.name       = 'noiseceiling';
-            M{14}            = pcm_prepFreeModel(M{14});
             
             % Treat the run effect as random or fixed?
             % We are using a fixed run effect here, as we are not interested in the
@@ -4648,7 +4559,7 @@ switch(what)
             
             % Provide a plot of the crossvalidated likelihoods
             subplot(3,7,[5 6 7 12 13 14 19 20 21]);
-            T = pcm_plotModelLikelihood(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
+            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
             title(subcortStructs{r})
             
         end
