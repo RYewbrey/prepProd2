@@ -1,4 +1,4 @@
-function [T] = pcm_plotModelLikelihood(T,M,varargin)
+function [T] = pcm_plotModelLikelihood_RY(T,M,varargin)
 % function [T] = pcm_plotModelLikelihood(T,M,varargin)
 %
 % Plots the scaled log likelihood of the pattern component

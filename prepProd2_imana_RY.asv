@@ -4479,17 +4479,6 @@ switch(what)
                 loopCounter = loopCounter+1;
             end%subj loop
             
-            %spatial pre-whitening
-            %             for i=1:length(Y)
-            %                 Y{i}(1:8,:) = prewhiten(Y{i}(1:8,:));
-            %                 Y{i}(9:16,:) = prewhiten(Y{i}(9:16,:));
-            %                 Y{i}(17:24,:) = prewhiten(Y{i}(17:24,:));
-            %                 Y{i}(25:32,:) = prewhiten(Y{i}(25:32,:));
-            %                 Y{i}(33:40,:) = prewhiten(Y{i}(33:40,:));
-            %                 Y{i}(41:48,:) = prewhiten(Y{i}(41:48,:));
-            %             end
-            
-            
             for i=1:length(Y)
                 G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
             end;
@@ -4864,7 +4853,7 @@ switch(what)
         T = pcm_plotModelLikelihood(Tcross,M,'upperceil',Tgroup.likelihood(:,6));
         title('Production')
         
-    case 'PCM_normaliseBetaMaps' %normalises individual beta maps for cortical ROI analysis
+    case 'PCM_normaliseBetaMaps' %normalises individual beta maps for cortical marsbar ROI analysis
         
         s = varargin{1};
         
@@ -4912,7 +4901,7 @@ switch(what)
         
         for i=1:length(roiName)
             
-            sphereROI = maroi_sphere(struct('centre',mni(i,:),'radius',6,'label',roiName{i})); %constructs ROIs in marsbar format
+            sphereROI = maroi_sphere(struct('centre',mni(i,:),'radius',9,'label',roiName{i})); %constructs ROIs in marsbar format
             
             %%% Then save:
             saveroi(sphereROI, [roiName{i}, '_elife.mat']); %as .mat
@@ -4931,7 +4920,7 @@ switch(what)
             
         end%for rois
         
-    case 'PCM_cortical_define_mva_area' %converts RoI from hand-drawn .nii to voxel coordinate .mat for PCM
+    case 'PCM_cortical_define_mva_area' %converts RoI from marsbar .nii to voxel coordinate .mat for PCM
         
         rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
         cd(roiDir);
@@ -4952,18 +4941,12 @@ switch(what)
             disp([rois{r} ' done'])
         end
         
-    case 'PCM_fitModels_corticalROI' %fits PCM models to data from hand-drawn ROIs
+    case 'PCM_fitModels_corticalROI' %fits PCM models to data from marsbar-defined ROIs
+        
+        %         anaSubj = [3,5,6,7,9,10,13,16,17,18,20,21,22,25,26,31,32,34,36,38,39,40,41,42];
         
         rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        
-        %load 9 representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
+        models = prepProdSimu_loadModels(modelDir);
         
         for r=1:length(rois)%for each roi
             
@@ -5025,17 +5008,7 @@ switch(what)
             
             Gm = mean(G_hat,3); % Mean estimate
             
-            orderPrepModel.G = pcm_estGCrossval(models.ordPrep.data,run,c); orderPrepModel.G(isnan(orderPrepModel.G)) = 0;
-            timingPrepModel.G = pcm_estGCrossval(models.tempPrep.data,run,c); timingPrepModel.G(isnan(timingPrepModel.G)) = 0;
-            integratedPrepModel.G = pcm_estGCrossval(models.intPrep.data,run,c); integratedPrepModel.G(isnan(integratedPrepModel.G)) = 0;
-            
-            orderProdModel.G = pcm_estGCrossval(models.ordProd.data,run,c); orderProdModel.G(isnan(orderProdModel.G)) = 0;
-            timingProdModel.G = pcm_estGCrossval(models.tempProd.data,run,c); timingProdModel.G(isnan(timingProdModel.G)) = 0;
-            integratedProdModel.G = pcm_estGCrossval(models.intProd.data,run,c); integratedProdModel.G(isnan(integratedProdModel.G)) = 0;
-            
-            orderMaintModel.G = pcm_estGCrossval(models.ordMaint.data,run,c); orderMaintModel.G(isnan(orderMaintModel.G)) = 0;
-            timingMaintModel.G = pcm_estGCrossval(models.tempMaint.data,run,c); timingMaintModel.G(isnan(timingMaintModel.G)) = 0;
-            integratedMaintModel.G = pcm_estGCrossval(models.intMaint.data,run,c); integratedMaintModel.G(isnan(integratedMaintModel.G)) = 0;
+            [M, R] = prepProdSimu_prepModels(models,run,c);
             
             figure
             subplot(3,7,[1, 8]);
@@ -5051,130 +5024,40 @@ switch(what)
             
             % visualise models
             subplot(3,7,2);
-            imagesc(orderPrepModel.G);
+            imagesc(R.orderPrepModel.G);
             title('Order Prep')
             
             subplot(3,7,9);
-            imagesc(orderProdModel.G);
+            imagesc(R.orderProdModel.G);
             title('Order Prod')
             
             subplot(3,7,16);
-            imagesc(orderMaintModel.G);
+            imagesc(R.orderMaintModel.G);
             title('Order Maint')
             
             subplot(3,7,3);
-            imagesc(timingPrepModel.G);
+            imagesc(R.timingPrepModel.G);
             title('Timing Prep')
             
             subplot(3,7,10);
-            imagesc(timingProdModel.G);
+            imagesc(R.timingProdModel.G);
             title('Timing Prod')
             
             subplot(3,7,17);
-            imagesc(timingMaintModel.G);
+            imagesc(R.timingMaintModel.G);
             title('Timing Maint')
             
             subplot(3,7,4);
-            imagesc(integratedPrepModel.G);
+            imagesc(R.integratedPrepModel.G);
             title('Integrated Prep')
             
             subplot(3,7,11);
-            imagesc(integratedProdModel.G);
+            imagesc(R.integratedProdModel.G);
             title('Integrated Prod')
             
             subplot(3,7,18);
-            imagesc(integratedMaintModel.G);
+            imagesc(R.integratedMaintModel.G);
             title('Integrated Maint')
-            
-            % ----------------------------------------------------------------
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = ones(8);
-            M{1}.name       = 'null';
-            
-            % Models 2-4: Order models, derived from simulations with
-            % high order decoding during prep, prod, & switch respectively
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = orderPrepModel.G;
-            M{2}.name       = 'ordPrep';
-            
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = orderProdModel.G;
-            M{3}.name       = 'ordProd';
-            
-            M{4}.type       = 'component';
-            M{4}.numGparams = 1;
-            M{4}.Gc         = orderMaintModel.G;
-            M{4}.name       = 'ordSwitch';
-            
-            % Models 5-7: Timing models, derived from simulations with
-            % high timing decoding during prep, prod, & switch respectively
-            M{5}.type       = 'component';
-            M{5}.numGparams = 1;
-            M{5}.Gc         = timingPrepModel.G;
-            M{5}.name       = 'timPrep';
-            
-            M{6}.type       = 'component';
-            M{6}.numGparams = 1;
-            M{6}.Gc         = timingProdModel.G;
-            M{6}.name       = 'timProd';
-            
-            M{7}.type       = 'component';
-            M{7}.numGparams = 1;
-            M{7}.Gc         = timingMaintModel.G;
-            M{7}.name       = 'timSwitch';
-            
-            % Models 8-10: Integrated models, derived from simulations with
-            % high integrated decoding
-            M{8}.type       = 'component';
-            M{8}.numGparams = 1;
-            M{8}.Gc         = integratedPrepModel.G;
-            M{8}.name       = 'intPrep';
-            
-            M{9}.type       = 'component';
-            M{9}.numGparams = 1;
-            M{9}.Gc         = integratedProdModel.G;
-            M{9}.name       = 'intProd';
-            
-            M{10}.type       = 'component';
-            M{10}.numGparams = 1;
-            M{10}.Gc         = integratedMaintModel.G;
-            M{10}.name       = 'intSwitch';
-            
-            % Model 11: Additive mixture between timing prep and prod models
-            M{11}.type       = 'component';
-            M{11}.numGparams = 2;
-            M{11}.Gc(:,:,1)  = orderPrepModel.G;
-            M{11}.Gc(:,:,2)  = orderProdModel.G;
-            M{11}.name       = 'ordPrep+Prod';
-            
-            % Model 12: Additive mixture between order prep and prod models
-            M{12}.type       = 'component';
-            M{12}.numGparams = 2;
-            M{12}.Gc(:,:,1)  = timingPrepModel.G;
-            M{12}.Gc(:,:,2)  = timingProdModel.G;
-            M{12}.name       = 'timPrep+Prod';
-            
-            % Model 12: Additive mixture between integrated prep and prod models
-            M{13}.type       = 'component';
-            M{13}.numGparams = 2;
-            M{13}.Gc(:,:,1)  = integratedPrepModel.G;
-            M{13}.Gc(:,:,2)  = integratedProdModel.G;
-            M{13}.name       = 'intPrep+Prod';
-            
-            % Model 14: Free model as Noise ceiling
-            M{14}.type       = 'freedirect';
-            %         M{14}.type       = 'freechol';
-            M{14}.numCond    = 8;
-            M{14}.name       = 'noiseceiling';
-            M{14}            = pcm_prepFreeModel(M{14});
             
             % Treat the run effect as random or fixed?
             % We are using a fixed run effect here, as we are not interested in the
@@ -5190,9 +5073,327 @@ switch(what)
             
             % Provide a plot of the crossvalidated likelihoods
             subplot(3,7,[5 6 7 12 13 14 19 20 21]);
-            T = pcm_plotModelLikelihood(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
+            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
             title(rois{r})
         end
+        
+    case 'PCM_fitModelsPrep_corticalROI' %PCM during prep phase only in marsbar ROIs (4 conditions)
+        
+        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
+        modelDir = [modelDir '\onePhase'];
+        
+        %load 9 representational models
+        models = prepProdSimu_loadModels(modelDir);
+        
+        for r=1:length(rois)%for each roi
+            %load subcortical data for analysis
+            %         s=varargin{1};
+            loopCounter = 1;
+            for s=anaSubj
+                
+                cd(fullfile(glmDir, subj_name{s})); %load SPM data
+                load SPM;
+                nrruns=length(SPM.nscan);
+                
+                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+                prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
+                prep=[repmat(prep,1,nrruns) runBSL];
+                
+                c=repmat(1:4,1,nrruns)'; % extract conditions (leave out errors!)
+                run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+                
+                [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
+                P={SPM.Vbeta(1:126).fname}';
+                Pselect=[];
+                for i=1:length(col)
+                    Pselect{i,1}= P{col(i)};
+                end
+                
+                S = load(fullfile(pcmDir,['\decodeArea_' rois{r} '.mat']));
+                Vin = spm_vol(char(Pselect));
+                
+                %extract voxels in decoding area from beta files and pass to MVPA function
+                linVox=unique(cat(2,S.LI{:})');
+                [I,J,K]=ind2sub(Vin(1).dim,linVox);
+                X = zeros(length(linVox),length(Vin));
+                
+                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
+                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
+                end
+                
+                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
+                nanidx = unique(nanidx);
+                X(nanidx,:) = [];
+                Y{:,loopCounter}=X';
+                
+                loopCounter = loopCounter+1;
+            end%subj loop
+            
+            for i=1:length(Y)
+                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
+            end;
+            
+            Gm = mean(G_hat,3); % Mean estimate
+            
+            timingModel.G = pcm_estGCrossval(models.temp.data,run,c);
+            orderModel.G = pcm_estGCrossval(models.ord.data,run,c);
+            integratedModel.G = pcm_estGCrossval(models.int.data,run,c);
+            
+            figure
+            subplot(2,4,1);
+            H = eye(4)-ones(4)/4;
+            imagesc(H*Gm*H');
+            title('Empirical Data')
+            
+            C= pcm_indicatorMatrix('allpairs',[1:4]');
+            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
+            subplot(2,4,2);
+            plot(COORD(:,1),COORD(:,2),'o');
+            axis equal;
+            
+            % visualise models
+            subplot(2,4,5);
+            imagesc(orderModel.G);
+            title('Order control')
+            
+            subplot(2,4,6);
+            imagesc(timingModel.G);
+            title('Timing control')
+            
+            subplot(2,4,7);
+            imagesc(integratedModel.G);
+            title('Integrated control')
+            
+            % ----------------------------------------------------------------
+            % Now build the models
+            % Model 1: Null model for baseline: here we use a model which has all finger
+            % Patterns be independent - i.e. all finger pairs are equally far away from
+            % each other
+            M{1}.type       = 'component';
+            M{1}.numGparams = 1;
+            M{1}.Gc         = ones(4);
+            M{1}.name       = 'null';
+            
+            % Model 2: Order model, derived from simulations with
+            % high order decoding
+            M{2}.type       = 'component';
+            M{2}.numGparams = 1;
+            M{2}.Gc         = orderModel.G;
+            M{2}.name       = 'order';
+            
+            % Model 3: Timing model, derived from simulations with
+            % high timing decoding
+            M{3}.type       = 'component';
+            M{3}.numGparams = 1;
+            M{3}.Gc         = timingModel.G;
+            M{3}.name       = 'timing';
+            
+            % Model 4: Integrated model, derived from simulations with
+            % high integrated decoding
+            M{4}.type       = 'component';
+            M{4}.numGparams = 1;
+            M{4}.Gc         = integratedModel.G;
+            M{4}.name       = 'integrated';
+            
+            %generate combination models, but exclude null model
+            Mtemp = pcm_constructModelFamily(M(2:end));
+            M = [M(1) Mtemp];
+            
+            %         % Model 5: Additive mixture between order and timing models
+            %         M{5}.type       = 'component';
+            %         M{5}.numGparams = 2;
+            %         M{5}.Gc(:,:,1)  = orderModel.G;
+            %         M{5}.Gc(:,:,2)  = timingModel.G;
+            %         M{5}.name       = 'order + timing';
+            
+            % Model end: Free model as Noise ceiling 
+            M{end+1}.type       = 'freechol';
+            %             M{end+1}.type       = 'freedirect';
+            M{end}.numCond    = 4;
+            M{end}.name       = 'noiseceiling';
+            M{end}            = pcm_prepFreeModel(M{end});
+            
+            % Treat the run effect as random or fixed?
+            % We are using a fixed run effect here, as we are not interested in the
+            % activity relative the the baseline (rest) - so as in RSA, we simply
+            % subtract out the mean patttern across all conditions.
+            runEffect  = 'fixed';
+            
+            % Fit the models on the group level
+            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
+            
+            % Fit the models through cross-subject crossvalidation
+            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
+            
+            % Provide a plot of the crossvalidated likelihoods
+            subplot(2,4,[4 8]);
+            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
+            title(['Preparation in ' rois{r}])
+            
+            clear('M')
+        end
+        
+    case 'PCM_fitModelsProd_corticalROI' %PCM during prod phase only in marsbar ROIs (4 conditions)
+        
+        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
+        modelDir = [modelDir '\onePhase'];
+        
+        %load 9 representational models
+        models = prepProdSimu_loadModels(modelDir);
+        
+        for r=1:length(rois)%for each roi
+            %load subcortical data for analysis
+            %         s=varargin{1};
+            loopCounter = 1;
+            for s=anaSubj
+                
+                cd(fullfile(glmDir, subj_name{s})); %load SPM data
+                load SPM;
+                nrruns=length(SPM.nscan);
+                
+                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+                prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
+                prod=[repmat(prod,1,nrruns) runBSL];
+                
+                c=repmat(1:4,1,nrruns)'; % extract conditions (leave out errors!)
+                run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+                
+                [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
+                P={SPM.Vbeta(1:126).fname}';
+                Pselect=[];
+                for i=1:length(col)
+                    Pselect{i,1}= P{col(i)};
+                end
+                
+                S = load(fullfile(pcmDir,['\decodeArea_' rois{r} '.mat']));
+                Vin = spm_vol(char(Pselect));
+                
+                %extract voxels in decoding area from beta files and pass to MVPA function
+                linVox=unique(cat(2,S.LI{:})');
+                [I,J,K]=ind2sub(Vin(1).dim,linVox);
+                X = zeros(length(linVox),length(Vin));
+                
+                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
+                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
+                end
+                
+                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
+                nanidx = unique(nanidx);
+                X(nanidx,:) = [];
+                Y{:,loopCounter}=X';
+                
+                loopCounter = loopCounter+1;
+            end%subj loop
+            
+            for i=1:length(Y)
+                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
+            end;
+            
+            Gm = mean(G_hat,3); % Mean estimate
+            
+            for i=1:length(Y)
+                [accuracy(i,:), accuracy(i+1,:), accuracy(i+2,:), accuracy(i+3,:)] = prepProdSimu_classify(Y{i});
+                [accID(i,:), accID(i,:), accID(i,:), accID(i,:)] = [1, 2, 3, 4];
+            end
+            
+            timingModel.G = pcm_estGCrossval(models.temp.data,run,c);
+            orderModel.G = pcm_estGCrossval(models.ord.data,run,c);
+            integratedModel.G = pcm_estGCrossval(models.int.data,run,c);
+            
+            figure
+            subplot(2,4,1);
+            H = eye(4)-ones(4)/4;
+            imagesc(H*Gm*H');
+            title('Empirical Data')
+            
+            C= pcm_indicatorMatrix('allpairs',[1:4]');
+            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
+            subplot(2,4,2);
+            plot(COORD(:,1),COORD(:,2),'o');
+            axis equal;
+            
+            % visualise models
+            subplot(2,4,5);
+            imagesc(orderModel.G);
+            title('Order control')
+            
+            subplot(2,4,6);
+            imagesc(timingModel.G);
+            title('Timing control')
+            
+            subplot(2,4,7);
+            imagesc(integratedModel.G);
+            title('Integrated control')
+            
+            % ----------------------------------------------------------------
+            % Now build the models
+            % Model 1: Null model for baseline: here we use a model which has all finger
+            % Patterns be independent - i.e. all finger pairs are equally far away from
+            % each other
+            M{1}.type       = 'component';
+            M{1}.numGparams = 1;
+            M{1}.Gc         = ones(4);
+            M{1}.name       = 'null';
+            
+            % Model 2: Order model, derived from simulations with
+            % high order decoding
+            M{2}.type       = 'component';
+            M{2}.numGparams = 1;
+            M{2}.Gc         = orderModel.G;
+            M{2}.name       = 'order';
+            
+            % Model 3: Timing model, derived from simulations with
+            % high timing decoding
+            M{3}.type       = 'component';
+            M{3}.numGparams = 1;
+            M{3}.Gc         = timingModel.G;
+            M{3}.name       = 'timing';
+            
+            % Model 4: Integrated model, derived from simulations with
+            % high integrated decoding
+            M{4}.type       = 'component';
+            M{4}.numGparams = 1;
+            M{4}.Gc         = integratedModel.G;
+            M{4}.name       = 'integrated';
+            
+            %generate combination models, but exclude null model
+            Mtemp = pcm_constructModelFamily(M(2:end));
+            M = [M(1) Mtemp];
+            
+            %         % Model 5: Additive mixture between order and timing models
+            %         M{5}.type       = 'component';
+            %         M{5}.numGparams = 2;
+            %         M{5}.Gc(:,:,1)  = orderModel.G;
+            %         M{5}.Gc(:,:,2)  = timingModel.G;
+            %         M{5}.name       = 'order + timing';
+            
+            % Model end: Free model as Noise ceiling
+            M{end+1}.type       = 'freechol';
+            %             M{end+1}.type       = 'freedirect';
+            M{end}.numCond    = 4;
+            M{end}.name       = 'noiseceiling';
+            M{end}            = pcm_prepFreeModel(M{end});
+            
+            % Treat the run effect as random or fixed?
+            % We are using a fixed run effect here, as we are not interested in the
+            % activity relative the the baseline (rest) - so as in RSA, we simply
+            % subtract out the mean patttern across all conditions.
+            runEffect  = 'fixed';
+            
+            % Fit the models on the group level
+            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
+            
+            % Fit the models through cross-subject crossvalidation
+            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
+            
+            % Provide a plot of the crossvalidated likelihoods
+            subplot(2,4,[4 8]);
+            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
+            title(['Production in ' rois{r}])
+            
+            clear('M')
+        end
+        
         
     case 'PCM_subcorticalSearchLight' % Define the search lights for the PCM analysis
         
