@@ -20,7 +20,7 @@ function prepProdSimu_runPCM(vtemp,vord,vinter,vnoise,n)
 
 simuDir = 'G:\projectsBackup\rhys\prepProd2\data\imaging\simulations';
 
-sn = 5; %number of subjects
+sn = 24; %number of subjects
 
 D=[];
 for i=1:sn %for subject n
@@ -53,9 +53,9 @@ partVec = reshape(partVec,1,[])';
 condVec = repmat([1;2;3;4], 6,1); %labelling conditions 1:4 (sequences)
 
 for s=1:length(A.data)
-    G_hat(:,:,s)=pcm_estGCrossval(A.data{s},partVec,condVec); 
-end; 
-Gm = mean(G_hat,3); % Mean estimate  
+    G_hat(:,:,s)=pcm_estGCrossval(A.data{s},partVec,condVec);
+end;
+Gm = mean(G_hat,3); % Mean estimate
 
 timingModel.G = pcm_estGCrossval(timingModel.data,partVec,condVec);
 orderModel.G = pcm_estGCrossval(orderModel.data,partVec,condVec);
@@ -91,44 +91,47 @@ title('Integrated control')
 % Model 1: Null model for baseline: here we use a model which has all finger
 % Patterns be independent - i.e. all finger pairs are equally far away from
 % each other
-M{1}.type       = 'component';
-M{1}.numGparams = 1;
-M{1}.Gc         = ones(4);
-M{1}.name       = 'null';
+% M{1}.type       = 'component';
+% M{1}.numGparams = 1;
+% M{1}.Gc         = ones(4);
+% M{1}.name       = 'null';
 
 % Model 2: Order model, derived from simulations with
 % high order decoding
-M{2}.type       = 'component';
-M{2}.numGparams = 1;
-M{2}.Gc         = orderModel.G;
-M{2}.name       = 'order';
+M{1}.type       = 'component';
+M{1}.numGparams = 1;
+M{1}.Gc         = orderModel.G;
+M{1}.name       = 'O';
 
 % Model 3: Timing model, derived from simulations with
 % high timing decoding
-M{3}.type       = 'component';
-M{3}.numGparams = 1;
-M{3}.Gc         = timingModel.G;
-M{3}.name       = 'timing';
+M{2}.type       = 'component';
+M{2}.numGparams = 1;
+M{2}.Gc         = timingModel.G;
+M{2}.name       = 'T';
 
 % Model 4: Integrated model, derived from simulations with
 % high integrated decoding
-M{4}.type       = 'component';
-M{4}.numGparams = 1;
-M{4}.Gc         = integratedModel.G;
-M{4}.name       = 'integrated';
+M{3}.type       = 'component';
+M{3}.numGparams = 1;
+M{3}.Gc         = integratedModel.G;
+M{3}.name       = 'I';
 
-% Model 5: Additive mixture between order and timing models
-M{5}.type       = 'component';
-M{5}.numGparams = 2;
-M{5}.Gc(:,:,1)  = orderModel.G;
-M{5}.Gc(:,:,2)  = timingModel.G;
-M{5}.name       = 'order + timing';
+M = pcm_constructModelFamily(M);
+
+% % Model 5: Additive mixture between order and timing models
+% M{5}.type       = 'component';
+% M{5}.numGparams = 2;
+% M{5}.Gc(:,:,1)  = orderModel.G;
+% M{5}.Gc(:,:,2)  = timingModel.G;
+% M{5}.name       = 'order + timing';
 
 % Model 6: Free model as Noise ceiling
-M{6}.type       = 'freechol';
-M{6}.numCond    = 4;
-M{6}.name       = 'noiseceiling';
-M{6}            = pcm_prepFreeModel(M{6});
+% M{6}.type       = 'freechol';
+M{end+1}.type       = 'freedirect';
+M{end}.numCond    = 4;
+M{end}.name       = 'noiseceiling';
+M{end}            = pcm_prepFreeModel(M{end});
 
 % Treat the run effect as random or fixed?
 % We are using a fixed run effect here, as we are not interested in the
@@ -148,6 +151,6 @@ Y = A.data; % function requires cell input
 
 % Provide a plot of the crossvalidated likelihoods
 subplot(2,4,[4 8]);
-T = pcm_plotModelLikelihood(Tcross,M,'upperceil',Tgroup.likelihood(:,6));
+T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
 
 varargout={T,M};

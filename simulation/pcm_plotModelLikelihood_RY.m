@@ -76,12 +76,12 @@ normalize = 0;                 % normalize likelihoods to upper noise ceiling
 style     = 'bar';             % plotting style. 'bar' or 'dot'
 plotceil  = 1;                 % turn on/off plotting of noise ceilings
 ceilcolor = [0.8 0.8 0.8];     % noise ceiling patch color
-colors    = {[.7 0 0],...      % red
-             [0 0 .7],...      % blue
+colors    = {[0 0 .7],...      % blue
+             [.7 0 0],...      % red
+             [0.2 0.6 0.2],... % green
              [.9 .6 0],...     % orange
              [0 0.6 0.6],...   % cyan
-             [0.5 0 0.5],...   % purple
-             [0.2 0.6 0.2]};   % green
+             [0.5 0 0.5]};...  % purple
 colors    = {colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:},colors{:}}; 
 pcm_vararginoptions(varargin,{'Nnull','Nceil','upperceil','colors',...
     'varfcn','mindx','subj','normalize','style','ceilcolor','plotceil'});

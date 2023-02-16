@@ -114,7 +114,7 @@ for i=subj;
     %     prepProd2_imana_RY('MNI_normalisation_subcorticalSearch',i)
     
 %         prepProd2_imana_RY('make_mask_subcorticalArea',i)
-        prepProd2_imana_RY('subcortical_define_mva_area',i)
+%         prepProd2_imana_RY('subcortical_define_mva_area',i)
     %     prepProd2_imana_RY('MVA_do_overallMov_subcorticalArea',i)
     %     prepProd2_imana_RY('MVA_do_overallPrep_subcorticalArea',i);
     %     prepProd2_imana_RY('MVA_do_spatOneout_Mov_subcorticalArea',i);
