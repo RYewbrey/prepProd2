@@ -12,13 +12,13 @@ function prepProdSimu_runPCM(vtemp,vord,vinter,vnoise,n)
 % specification for models is found below
 % RY 10/2022
 
-% addpath(genpath('G:\projectsBackup\rhys\prepProd2\matlab')); %Adjust! loaded with subdirectories (genpath command)
-% addpath(genpath('D:\projects\toolboxes\tools')); %joern's extensions for spm
-% addpath(genpath('D:\projects\toolboxes\userfun')); %joern's util tools (open source)
-% addpath(genpath('D:\projects\toolboxes\rsatoolbox_matlab')); %RSA toolbox
-% addpath(genpath('D:\projects\toolboxes\pcm_toolbox')); %PCM toolbox
+% addpath(genpath('Z:\rhys\prepProd2\matlab')); %Adjust! loaded with subdirectories (genpath command)
+% addpath(genpath('Z:\toolboxes\tools')); %joern's extensions for spm
+% addpath(genpath('Z:\toolboxes\userfun')); %joern's util tools (open source)
+% addpath(genpath('Z:\toolboxes\rsatoolbox_matlab')); %RSA toolbox
+% addpath(genpath('Z:\toolboxes\pcm_toolbox')); %PCM toolbox
 
-simuDir = 'G:\projectsBackup\rhys\prepProd2\data\imaging\simulations';
+simuDir = 'Z:\rhys\prepProd2\data\imaging\simulations';
 
 sn = 24; %number of subjects
 

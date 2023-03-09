@@ -1398,11 +1398,11 @@ switch(what)
         
         %Across participants
         
-        Y=tapply(A,{'subj','tempID'},{A.timing(:,1),'nanmean','name','initTime'},'subset',A.trialType==1&A.mode==2&A.BN>=47&A.BN<=52&A.points>=1&A.jitterMask==0);
+        Y=tapply(A,{'subj','tempID'},{A.timing(:,1),'nanmedian','name','initTime'},'subset',A.trialType==1&A.mode==2&A.BN>=47&A.BN<=52&A.points>=1&A.jitterMask==0);
         
         t1=Y.initTime(Y.tempID==1);
         t2=Y.initTime(Y.tempID==2);
-        [P H] = ttest(t1,t2,2,'paired')
+        [H P] = ttest(t1,t2,2,'paired')
         
         figure
         lineplot(Y.tempID,Y.initTime,'style_thickline','leg','auto');

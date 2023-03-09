@@ -29,7 +29,7 @@ function varargout = prepProdSimu_runPCMPP(prepProd,vord,vtemp,vinter,vnoise,n)
 % addpath(genpath('D:\projects\toolboxes\pcm_toolbox')); %PCM toolbox
 
 %adjust directory to where simulated data is stored
-simuDir = 'G:\projectsBackup\rhys\prepProd2\data\imaging\simulations';
+simuDir = 'Z:\rhys\prepProd2\data\imaging\simulations';
 modelDir=[simuDir '\models'];
 
 sn = 5; %number of simulated subjects
