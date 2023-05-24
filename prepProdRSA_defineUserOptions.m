@@ -1,4 +1,4 @@
-function userOptions = prepProdRSA_defineUserOptions()
+function userOptions = prepProdRSA_defineUserOptions(baseDir)
 %
 %  projectOptions is a nullary function which initialises a struct
 %  containing the preferences and details for a particular project.
@@ -23,7 +23,7 @@ userOptions.projectName  = 'prepProd';
 userOptions.analysisName = 'prepProdRSA';
 
 % This is the root directory of the project.
-userOptions.rootPath = 'G:\projectsBackup\rhys\prepProd2\data\imaging';
+userOptions.rootPath = fullfile(baseDir, 'imaging');
 
 % The path leading to where the scans are stored (not including subject-specific identifiers).
 % "[[subjectName]]" should be used as a placeholder to denote an entry in userOptions.subjectNames
@@ -34,58 +34,58 @@ userOptions.betaPath = fullfile(userOptions.rootPath,'GLM_firstlevel','[[subject
 %% FEATUERS OF INTEREST SELECTION OPTIONS %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-	%% %% %% %% %%
-	%% fMRI  %% Use these next three options if you're working in fMRI native space:
-	%% %% %% %% %%
-	
-	% The path to a stereotypical mask data file is stored (not including subject-specific identifiers).
-	% "[[subjectName]]" should be used as a placeholder to denote an entry in userOptions.subjectNames
-	% "[[maskName]]" should be used as a placeholder to denote an entry in userOptions.maskNames
-	userOptions.maskPath = fullfile(userOptions.rootPath,'subcortical','area','[[subjectName]]','r[[subjectName]]_[[maskName]].nii');%'/imaging/mb01/lexpro/multivariate/ffx_simple/[[subjectName]]/[[maskName]].img';
-		
-		% The list of mask filenames (minus .hdr extension) to be used.
-		userOptions.maskNames = { ...
-            'brain_stem'...
-			'left_accumbens_area',...
-            'left_caudate',...
-            'left_hippocampus',...
-            'left_putamen',...
-            'left_thalamus'...
-%             'right_accumbens_area',...
-%             'right_caudate',...
-%             'right_hippocampus',...
-%             'right_putamen',...
-%             'right_thalamus',...
-			};
+%% %% %% %% %%
+%% fMRI  %% Use these next three options if you're working in fMRI native space:
+%% %% %% %% %%
+
+% The path to a stereotypical mask data file is stored (not including subject-specific identifiers).
+% "[[subjectName]]" should be used as a placeholder to denote an entry in userOptions.subjectNames
+% "[[maskName]]" should be used as a placeholder to denote an entry in userOptions.maskNames
+userOptions.maskPath = fullfile(userOptions.rootPath,'subcortical','[[subjectName]]','mr[[subjectName]]_[[maskName]].nii');
+
+% The list of mask filenames (minus .hdr extension) to be used.
+userOptions.maskNames = { ...
+    'left_caudate',...
+    'left_putamen',...
+    'left_hippocampus',...
+    'left_thalamus',...
+    'right_caudate',...
+    'right_putamen',...
+    'right_hippocampus',...
+    'right_thalamus'...
+    %'brain_stem',...
+    %'left_accumbens_area',...
+    %'right_accumbens_area',...
+    };
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% SEARCHLIGHT OPTIONS %%
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
-	%% %% %% %% %%
-	%% fMRI  %% Use these next three options if you're working in fMRI native space:
-	%% %% %% %% %%
+%% %% %% %% %%
+%% fMRI  %% Use these next three options if you're working in fMRI native space:
+%% %% %% %% %%
 
-		% What is the path to the anatomical (structural) fMRI scans for each subject?
-		% "[[subjectName]]" should be used to denote an entry in userOptions.subjectNames
-		userOptions.structuralsPath = fullfile(userOptions.rootPath,'anatomicals','[[subjectName]]');% e.g. /imaging/mb01/lexpro/[[subjectName]]/structurals/
-	
-		% What are the dimensions (in mm) of the voxels in the scans?
-		userOptions.voxelSize = [2 2 2];
-	
-		% What radius of searchlight should be used (mm)?
-		userOptions.searchlightRadius = 16;
-	
+% What is the path to the anatomical (structural) fMRI scans for each subject?
+% "[[subjectName]]" should be used to denote an entry in userOptions.subjectNames
+userOptions.structuralsPath = fullfile(userOptions.rootPath,'anatomicals','[[subjectName]]');% e.g. /imaging/mb01/lexpro/[[subjectName]]/structurals/
+
+% What are the dimensions (in mm) of the voxels in the scans?
+userOptions.voxelSize = [2 2 2];
+
+% What radius of searchlight should be used (mm)?
+userOptions.searchlightRadius = 16;
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% EXPERIMENTAL SETUP %%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 % The list of subjects to be included in the study.
 userOptions.subjectNames = { ...
-	's03','s05','s06','s07','s09','s10','s13','s16',...
+    's03','s05','s06','s07','s09','s10','s13','s16',...
     's17','s18','s20','s21','s22','s25','s26','s31',...
     's32','s34','s36','s38','s39','s40','s41','s42'...
-	};% eg CBUXXXXX
+    };
 
 % The default colour label for RDMs corresponding to RoI masks (as opposed to models).
 userOptions.RoIColor = [0 0 1];
@@ -101,9 +101,9 @@ userOptions.getSPMData = true;
 
 %% First-order analysis
 
-userOptions.nConditions = 8;
+userOptions.nConditions = 4*2; %4 sequences * prep&prod
 % Text lables which may be attached to the conditions for MDS plots.
-[userOptions.conditionLabels{1:userOptions.nConditions}] = deal('O1T1 Prod', 'O1T2 Prod', 'O2T1 Prod', 'O2T2 Prod', 'O1T1 Prep', 'O1T2 Prep', 'O2T1 Prep', 'O2T2 Prep');
+[userOptions.conditionLabels{1:userOptions.nConditions}] = deal('O1T1 Prep', 'O1T2 Prep', 'O2T1 Prep', 'O2T2 Prep', 'O1T1 Prod', 'O1T2 Prod', 'O2T1 Prod', 'O2T2 Prod');
 % userOptions.alternativeConditionLabels = { ...
 % 	' ', ...
 % 	' ', ...
@@ -113,10 +113,11 @@ userOptions.nConditions = 8;
 % 	};
 % userOptions.useAlternativeConditionLabels = false;
 
-userOptions.conditionColours = [repmat([1 0 0], 48,1); repmat([0 0 1], 44,1)];
+userOptions.conditionColours = [repmat([1 0 0], 8,1); repmat([0 0 1], 44,1)];
 
 % Which distance measure to use when calculating first-order RDMs.
-userOptions.distance = 'Correlation';
+userOptions.distance = 'mahalanobis';
+% userOptions.distance = 'Correlation';
 
 %% Second-order analysis
 

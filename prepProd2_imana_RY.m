@@ -7,25 +7,26 @@ function prepProd2_imana_RY(what,varargin)
 % addpath(genpath('Z:/toolboxes/tools')); %joern's extensions for spm
 % addpath(genpath('Z:/toolboxes/userfun')); %joern's util tools (open source)
 % addpath(genpath('Z:/toolboxes/region-master')); %joern's region toolbox for spm
-% % addpath(genpath('Z:/toolboxes/spm12/marsbar-0.44')) %marsbar ROI toolbox
-% addpath(genpath('Z:/toolboxes/spm12/toolbox/suit')); %SUIT toolbox for cerebellar analysis
-% addpath(genpath('Z:/toolboxes/spm12/toolbox/DARTEL')); %DARTEL toolbox for SUIT reslice function
+% addpath(genpath('Z:/toolboxes/spm12/toolbox/suit')); %SUIT Cerebellum
+% addpath(genpath('Z:/toolboxes/spm12/toolbox/DARTEL')); %DARTEL deformation for suit reslice
+% addpath(genpath('Z:/toolboxes/spm12/toolbox/OldSeg')); %for suit reslice
 % addpath(genpath('Z:/toolboxes/permutest')); %permutest for crossSection analysis
 % addpath(genpath('Z:/toolboxes/rsatoolbox_matlab')); %RSA toolbox
 % addpath(genpath('Z:/toolboxes/pcm_toolbox')); %PCM toolbox
-% 
+%
 %BlueBear paths
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/rhys/prepProd2/matlab')); %Adjust! loaded with subdirectories (genpath command)
 % addpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12');
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/tools')); %joern's extensions for spm
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/userfun')); %joern's util tools (open source)
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/region-master')); %joern's region toolbox for spm
-% % addpath(genpath('Z:/toolboxes/spm12/marsbar-0.44')) %marsbar ROI toolbox
-% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12/toolbox/suit')); %SUIT toolbox for cerebellar analysis
-% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12/toolbox/DARTEL')); %DARTEL toolbox for SUIT reslice function
+% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12/toolbox/suit')); %SUIT cerebellum toolbox
+% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12/toolbox/DARTEL')); %DARTEL transformation
+% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/spm12/toolbox/OldSeg')); %For SUIT reslicing
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/permutest')); %permutest for crossSection analysis
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/rsatoolbox_matlab')); %RSA toolbox
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/pcm_toolbox')); %PCM toolbox
+% addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/toolboxes/surfing')); %surfing, used in RSA toolbox
 
 %%%definition and variables
 
@@ -46,22 +47,19 @@ roiCbDir=[baseDir filesep 'imaging' filesep 'ROI' filesep 'cerebellum'];
 roiCorticalDir=[baseDir filesep 'imaging' filesep 'ROI' filesep 'cortical'];
 suitDir=[baseDir filesep 'imaging' filesep 'suit'];
 suitGroupDir=[baseDir filesep 'imaging' filesep 'suit_secondlevel'];
+suitGroupRSADir=[suitGroupDir filesep 'rsa'];
 suitScndDir=[baseDir filesep 'imaging' filesep 'suit_secondlevel' filesep 'data'];
-subcorticalSearchDir=[baseDir filesep 'imaging' filesep 'subcortical' filesep 'search'];
-subcorticalSearchGroupDir=[baseDir filesep 'imaging' filesep 'subcortical_secondlevel' filesep 'search'];
-subcorticalAreaDir=[baseDir filesep 'imaging' filesep 'subcortical' filesep 'area'];
-subcorticalPCMDir=[baseDir filesep 'imaging' filesep 'subcortical' filesep 'pcm'];
-corticalPCMDir=[baseDir filesep 'imaging' filesep 'cortical' filesep 'pcm'];
-crossSectionDir=[baseDir filesep 'imaging' filesep 'crossSection'];
-pcmDir=[baseDir filesep 'imaging' filesep 'pcm'];
-pcmGroupDir=[baseDir filesep 'imaging' filesep 'GLM_secondlevel' filesep 'PCM'];
-modelDir=[baseDir filesep 'imaging' filesep 'simulations/models'];
+subcorticalDir=[baseDir filesep 'imaging' filesep 'subcortical'];
 cerebellumDir=[baseDir filesep 'imaging' filesep 'cerebellum'];
+crossSectionDir=[baseDir filesep 'imaging' filesep 'crossSection'];
+modelDir=[baseDir filesep 'imaging' filesep 'simulations' filesep 'models'];
+rsaDir=[baseDir filesep 'imaging' filesep 'rsa'];
+rsaCorticalDir=[rsaDir filesep 'cortical'];
+rsaCorticalGroupDir=[baseDir filesep 'imaging' filesep 'rsa_secondlevel' filesep 'cortical'];
 
 %% Names and IDs
 subj=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42];
 anaSubj = [3,5,6,7,9,10,13,16,17,18,20,21,22,25,26,31,32,34,36,38,39,40,41,42];
-%
 
 subj_name={'s01','s02','s03','s04','s05','s06','s07','s08','s09','s10','s11','s12','s13','s14','s15','s16','s17','s18','s19','s20','s21','s22','s23','s24','s25','s26',...
     's27','s28','s29','s30','s31','s32','s33','s34','s35','s36','s37','s38','s39','s40','s41','s42'};
@@ -203,19 +201,16 @@ allSubcortStructs = ... %subcortical structures of interest for later analysis, 
     'right_amygdala','right_accumbens_area','right_ventral_dc','right_vessel','right_choroid_plexus'
     };
 
-subcortStructs = ... %subcortical structures of interest for later analysis, defined from freesurfer aseg
-    {'left_thalamus','left_caudate','left_putamen','left_pallidum','left_hippocampus',...
+subcortStructs = {... %subcortical structures of interest for later analysis, defined from freesurfer aseg
+    10,              11,             12,             13,              17,...
+    29,              50,             51,             52,              53;...
+    'left_thalamus', 'left_caudate', 'left_putamen', 'left_pallidum', 'left_hippocampus',...
     'right_thalamus','right_caudate','right_putamen','right_pallidum','right_hippocampus',...
     };
 
-allcbRegions = ... %cerebellar ROIs defined from cerebellar aseg, generated by https://www.volbrain.upv.es/
-    {'left_lobule_1-2', 'left_lobule_3', 'left_lobule_4', 'left_lobule_5', 'left_lobule_6', 'left_lobule_crus_1',...
-    'left_lobule_crus_2', 'left_lobule_7b', 'left_lobule_8a', 'left_lobule_8b', 'left_lobule_9', 'left_lobule_10', 'left_white_matter',...
-    'right_lobule_1-2', 'right_lobule_3', 'right_lobule_4', 'right_lobule_5', 'right_lobule_6', 'right_lobule_crus_1',...
-    'right_lobule_crus_2', 'right_lobule_7b', 'right_lobule_8a', 'right_lobule_8b','right_lobule_9', 'right_lobule_10', 'right_white_matter'};
-
-cbRegions = ... %cerebellar ROIs used in prepProd
-    {'left_lobule_5', 'left_lobule_6', 'left_lobule_crus_1','left_lobule_crus_2','right_lobule_5', 'right_lobule_6', 'right_lobule_crus_1', 'right_lobule_crus_2'};
+suitCBRegions = {...
+    3,               4,                5,               7,                8,             10,             11,            13;
+    'left_lobule_5', 'right_lobule_5', 'left_lobule_6', 'right_lobule_6', 'left_crus_1', 'right_crus_1', 'left_crus_2', 'right_crus_2'};
 
 corticalRegions = ...
     {'LM1', 'LPMd', 'LSMA', 'LSPC', 'RM1', 'RPMd', 'RSMA', 'RSPC'};
@@ -223,7 +218,7 @@ corticalRegions = ...
 %%%
 switch(what)
     
-    case 'make_nii'
+    case 'make_nii' %pre-processing
         sn=varargin{1};
         cd(fullfile(rawDir,subjID{sn}));
         
@@ -321,7 +316,6 @@ switch(what)
         catch
             disp('No EPI. Most likely a typo in file name or missing destination directory!');
         end
-        
     case 'set_AC' %reslice into LPI and set anterior commisure
         sn=varargin{1}; disp(subj_name{sn});
         cd(fullfile(anatDir,subj_name{sn}));
@@ -330,7 +324,6 @@ switch(what)
         V.mat(:,4)= originAC(sn,:); %put in AC coordinates (reverse the sign for each coordinate!)
         V.fname= [subj_name{sn} '_anatomical.nii'];
         spm_write_vol(V,X);
-        
     case 'slice_timing'
         sn=varargin{1};
         cd(fullfile(epiDir, subj_name{sn}));
@@ -355,13 +348,11 @@ switch(what)
         matlabbatch{1}.spm.temporal.st.refslice = 1;
         matlabbatch{1}.spm.temporal.st.prefix = 'a';
         spm_jobman('run',matlabbatch);
-        
     case 'realign_unwarp' %extracts motion regressors for glm; http://www.diedrichsenlab.org/imaging/robustWLS.html
         sn=varargin{1};
         cd(fullfile(epiDir, subj_name{sn}));
         prefix='a';
         spmj_realign_unwarp(epiDir, subj_name{sn}, run, 1, nrVolumes,'prefix',prefix)
-        
     case 'meanepi'
         sn=varargin{1};
         
@@ -385,7 +376,6 @@ switch(what)
         matlabbatch{1}.spm.util.imcalc.options.dtype = 4;
         
         spm_jobman('run',matlabbatch);
-        
     case 'coreg'
         
         sn=varargin{1}; disp(subj_name{sn});
@@ -419,8 +409,7 @@ switch(what)
         %
         %%% *4. Check whether runs are really aligned to the rmeanepi on
         %%% MRIcron: using anatomical and ua* data overlap
-        
-    case 'glm_set'
+    case 'glm_set' %GLM
         sn=varargin{1};
         prefix='ua'; %% if bias correction was performed previously
         delay=0;
@@ -542,7 +531,7 @@ switch(what)
             k=isempty(idx);
             if k==0
                 J.sess(r).cond(c).onset = [B.tZeroCue(idx)/1000];
-                J.sess(r).cond(c).duration = [( (B.tZero(idx)- B.tZeroCue(idx))+B.goCueDur(idx)+B.crossDur(idx)+B.feedbackCalcDur(idx) + 1000 )/1000 ]; %%%TODO
+                J.sess(r).cond(c).duration = [( (B.tZero(idx)- B.tZeroCue(idx))+B.goCueDur(idx)+B.crossDur(idx)+B.feedbackCalcDur(idx) + 1000 )/1000 ];
                 
             else
                 J.sess(r).cond(c).onset = -99;
@@ -700,7 +689,6 @@ switch(what)
         
         %%%CHECK: load('SPM.mat'); imagesc(SPM.xX.X)    ; use plot as well
         %http://people.duke.edu/~njs28/spmdatastructure.htm
-        
     case 'glm_estimate'
         %%% Estimate GLM
         sn=varargin{1};
@@ -713,7 +701,6 @@ switch(what)
         
         spm_jobman('run',matlabbatch);
         disp('GLM estimate DONE.');
-        
     case 'glm_contrast'
         
         sn=varargin{1};
@@ -789,7 +776,6 @@ switch(what)
         %             %____do the constrasts
         %             SPM=spm_contrasts(SPM,[1:length(SPM.xCon)]);
         %             save SPM SPM;
-        
     case 'con_smooth'
         
         
@@ -818,7 +804,6 @@ switch(what)
         con=fullfile(glmDir, subj_name{s},'con_0006.nii'); %%contrast smoother
         scon=fullfile(glmDir, subj_name{s},[subj_name{s} '_scon_0006.nii']);
         spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
-        
     case 'glm_contrastGroup'
         
         %Produces second-level contrasts. Edit contrast folders, image names, and subject nifti files.
@@ -854,7 +839,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);  %Run SPM
         end
-        
     case 'glm_contrastEstimate'
         
         dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
@@ -867,7 +851,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'segment' %Segment grey matter + white matter + csf
         sn=varargin{1};
         
@@ -895,7 +878,6 @@ switch(what)
         J.opts.msk = {''};
         matlabbatch{1}.spm.spatial.preproc=J;
         spm_jobman('run',matlabbatch);
-        
     case 'make_mask'  % Makes restricted analysis mask for MVA
         s=varargin{1};
         mask=fullfile(glmDir, subj_name{s},'mask.nii');
@@ -907,7 +889,6 @@ switch(what)
         spm_smooth(P1,sP1,[4 4 4]); %smooth with 4mm kernel
         spm_smooth(P2,sP2,[4 4 4]);
         spm_imcalc_ui({mask,sP1,sP2},omask,'i1 & (i2 +i3)>0.01',{}); %recorded activity in brain (grey + white matter)
-        
     case 'MVA_search' % Define the search lights for the MVA analysis
         
         s=varargin{1};
@@ -920,7 +901,6 @@ switch(what)
         vox=[i j k];
         [LI,voxmin,voxmax,n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvox.nii');
         save volsearch160.mat vox LI voxmin voxmax n
-        
     case 'MVA_do_overallMov'                 % Conduct the classification analysis 4 sequences
         s=varargin{1};
         
@@ -956,7 +936,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_overallPrep'                 % Conduct the classification analysis 4 sequences
         s=varargin{1};
         
@@ -992,7 +971,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_spatOneout_Mov'
         sn=varargin{1};
         
@@ -1044,7 +1022,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_spatOneout_Prep'
         sn=varargin{1};
         
@@ -1096,7 +1073,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Mov'
         sn=varargin{1};
         
@@ -1148,7 +1124,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Prep'
         sn=varargin{1};
         
@@ -1200,7 +1175,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_Int_Mov'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -1236,7 +1210,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_Int_Prep'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -1274,7 +1247,6 @@ switch(what)
         telapsed = toc(tstart)
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
     case 'MVA_do_overallMov_points'                 % Conduct the classification analysis 4 sequences
         s=varargin{1};
         
@@ -1310,7 +1282,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_overallPrep_points'                 % Conduct the classification analysis 4 sequences
         s=varargin{1};
         
@@ -1346,7 +1317,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_spatOneout_Mov_points'
         sn=varargin{1};
         
@@ -1398,7 +1368,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_spatOneout_Prep_points'
         sn=varargin{1};
         
@@ -1450,7 +1419,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Mov_points'
         sn=varargin{1};
         
@@ -1502,7 +1470,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Prep_points'
         sn=varargin{1};
         
@@ -1554,7 +1521,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_Int_Mov_points'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -1590,7 +1556,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_Int_Prep_points'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -1626,7 +1591,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(glmDir,subj_name{s},'volsearch160.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_group'
         dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
         images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep';'szacc_Int_160_Mov';'szacc_Int_160_Prep';'szacc_Spat_160_Mov';'szacc_Spat_160_Prep';'szacc_Temp_160_Mov';'szacc_Temp_160_Prep'};
@@ -1667,7 +1631,6 @@ switch(what)
         %open spm fmri and select 'imcalc'
         %choose all images from participants of interest
         %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+16+i17+i18+i19+i20+i21+i22+i23+i24)/24
-        
     case 'MVA_estimate'
         dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
         %         dataDir = {'MVA_comb_mov', 'MVA_comb_prep'}; %%Save folders for each contrast
@@ -1680,7 +1643,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'MVA_zValue'
         
         s=varargin{1};
@@ -1705,7 +1667,6 @@ switch(what)
             spmj_imcalc_mtx(input_image, output_image,...
                 sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
         end;
-        
     case 'MVA_zValue_oneOut'
         
         s=varargin{1};
@@ -1729,7 +1690,6 @@ switch(what)
             spmj_imcalc_mtx(input_image, output_image,...
                 sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
         end;
-        
     case 'MVA_smooth' %%%Smoothing in subject space
         
         s=varargin{1};
@@ -1773,7 +1733,6 @@ switch(what)
         spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
         
         %smooth other images here as required
-        
     case 'MNI_normalization'
         mkdir(fullfile(groupDir,'data')); % folder for each contrast
         
@@ -1829,7 +1788,6 @@ switch(what)
         %                     out_images{j}= fullfile(groupDir,[name '_' subj_name{s} '.nii']);
         %                 end
         %                 spmj_normalization_write(defor, sn_images,'outimages',out_images); %Trilinear interpolation
-        
     case 'ROI_define' %%% 1. Define ROI via GUI:
         R=region_getregions; %opens gui
         
@@ -1858,10 +1816,9 @@ switch(what)
         %%% Then save:
         save(roiOUT,'R');
         R=region_saveasimg(R,'avg152T1.nii','name','ROI');
-        
-    case 'ROI_run'        %%% 2. Extract values via GUI
+    case 'ROI_run'        %%% 2. Extract decoding values via GUI
         %         roiIN='D:/projects/rhys/prepProd/data/imaging/ROI/roi_Elife2014.mat';
-        roiIN=[roiDir '/roi_Elife2014_bilateral.mat'];
+        roiIN = fullfile(roiDir, 'LDA', 'roi_Elife2014_bilateral.mat');
         
         load(roiIN);
         P={};
@@ -1943,8 +1900,7 @@ switch(what)
         save('PrepProd_ROI.mat','-struct','K');
         
         ROI;
-        
-    case 'ROI_runComb'        %%% 2. Extract values via GUI
+    case 'ROI_runComb'        %%% 3. Extract ovr decoding values via GUI
         %         roiIN='D:/projects/rhys/prepProd/data/imaging/ROI/roi_Elife2014.mat';
         roiIN=[roiDir '/roi_Elife2014_bilateral.mat'];
         
@@ -2027,7 +1983,6 @@ switch(what)
         save('PrepProd_ROI.mat','-struct','K');
         
         ROI;
-        
     case 'ROI_runCon' %for contrasts only
         roiIN=[roiDir '/roi_Elife2014_bilateral.mat'];
         
@@ -2089,8 +2044,7 @@ switch(what)
         end;
         
         save('Con_ROI.mat','-struct','K');
-        
-    case 'ROI_crossSectionPermutest'
+    case 'ROI_crossSectionPermutest' %cross-sectional analysis
         
         cd(fullfile(crossSectionDir, 'data'))
         
@@ -2169,12 +2123,7 @@ switch(what)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGINNING OF SUIT ANALYSIS (CEREBELLUM)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         
-        
-        
-        
-        
-        
-    case 'suit_segment' %%%%%%%%%%%%%%%%%%% BEGINNING OF SUIT ANALYSIS (CEREBELLUM) %%%%%%%%%%%%%%%%%%%%%%%
+    case 'suit_segment' %%%%%%%%%%%%%%%%%%% BEGINNING OF SUIT DECODING ANALYSIS (CEREBELLUM) %%%%%%%%%%%%%%%%%%%%%%%
         %Isolate the cerebellum of each participant - produces 'c_<source>_pcereb' (cerebellar mask) and '<source>_seg1/2' (grey and white matter respectively) images
         
         sn=varargin{1};
@@ -2184,7 +2133,6 @@ switch(what)
         anatomical = {[subj_name{sn} '_anatomical.nii']};
         
         suit_isolate_seg(anatomical, 'maskp', 0.2) %change maskp for probability value. Higher = tighter mask. Hand-correct using MRIcron if necessary
-        
     case 'suit_make_mask' %restrict area of analysis to grey matter - produces 'maskbrainSUIT.nii'
         
         s=varargin{1};
@@ -2199,7 +2147,6 @@ switch(what)
         omask=fullfile(suitDir, subj_name{s},'maskbrainSUIT.nii');
         
         spm_imcalc_ui({mask,suit},omask,'i1>0 & i2>0.999',{}); %so including a mask of 0.999 makes sure we only include cerebellar regions.
-        
     case 'MVA_searchSUIT' % Define the search lights for the MVA analysis
         
         s=varargin{1};
@@ -2215,7 +2162,6 @@ switch(what)
         
         [LI,voxmin,voxmax,n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvoxSUIT.nii');
         save volsearch160SUIT.mat vox LI voxmin voxmax n
-        
     case 'MVA_do_overallMov_suit'
         
         s=varargin{1};
@@ -2252,7 +2198,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_overallPrep_suit'                 % Conduct the classification analysis 4 sequences
         s=varargin{1};
         
@@ -2288,7 +2233,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_spatOneout_Mov_suit'
         sn=varargin{1};
         
@@ -2340,7 +2284,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_spatOneout_Prep_suit'
         sn=varargin{1};
         
@@ -2392,7 +2335,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Mov_suit'
         sn=varargin{1};
         
@@ -2444,7 +2386,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_tempOneout_Prep_suit'
         sn=varargin{1};
         
@@ -2496,7 +2437,6 @@ switch(what)
             telapsed = toc(tstart);
             
         end;
-        
     case 'MVA_do_Int_Mov_suit'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -2532,7 +2472,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_do_Int_Prep_suit'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
         s=varargin{1};
         
@@ -2568,7 +2507,6 @@ switch(what)
         tstart = tic
         lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
         telapsed = toc(tstart)
-        
     case 'MVA_zValue_suit'
         
         s=varargin{1};
@@ -2593,7 +2531,6 @@ switch(what)
             spmj_imcalc_mtx(input_image, output_image,...
                 sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
         end;
-        
     case 'MVA_zValue_oneOut_suit'
         
         s=varargin{1};
@@ -2617,7 +2554,6 @@ switch(what)
             spmj_imcalc_mtx(input_image, output_image,...
                 sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
         end;
-        
     case 'MVA_smooth_suit'
         
         s=varargin{1};
@@ -2658,7 +2594,6 @@ switch(what)
         comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Int_160_Prep.nii']); %%MVPA smoother
         scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Int_160_Prep.nii']);
         spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-        
     case 'con_smooth_suit'
         
         s = varargin{1};
@@ -2686,7 +2621,6 @@ switch(what)
         con=fullfile(suitDir, subj_name{s},'con_0006.nii'); %%contrast smoother
         scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0006.nii']);
         spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
-        
     case 'suit_normalize' %normalise the isolated cerebellum to the suit atlas - produces 'affine_<source>.mat' and 'u_a_<name>.nii'
         
         sn=varargin{1};
@@ -2702,7 +2636,6 @@ switch(what)
         job.subjND.isolation = isoMask;
         
         suit_normalize_dartel(job) %run the function with the struct as the input
-        
     case 'suit_normalise' %normalisation into suit space
         
         sn=varargin{1};
@@ -2742,7 +2675,6 @@ switch(what)
         
         %function
         suit_reslice_dartel(job)
-        
     case 'suit_reslice_contrast' %reslice smoothed, normalised, individual contrast maps into SUIT space
         
         sn=varargin{1};
@@ -2781,7 +2713,6 @@ switch(what)
         
         %function
         suit_reslice_dartel(job)
-        
     case 'glm_contrastGroup_suit'
         
         %Produces second-level contrasts. Edit contrast folders, image names, and subject nifti files.
@@ -2811,7 +2742,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);  %Run SPM
         end
-        
     case 'glm_contrastEstimate_suit'
         
         dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
@@ -2824,7 +2754,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'MVA_group_suit'
         dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
         images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep';'szacc_Int_160_Mov';'szacc_Int_160_Prep';'szacc_Spat_160_Mov';'szacc_Spat_160_Prep';'szacc_Temp_160_Mov';'szacc_Temp_160_Prep'};
@@ -2866,7 +2795,6 @@ switch(what)
         %choose all images from participants of interest
         %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+i16+i17+i18+i19+i20+i21+i22+i23+i24)/24
         %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+i16+i17+i18+i19+i20+i21+i22+i23+i24)/24;
-        
     case 'MVA_estimate_suit'
         dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
         %         dataDir = {'MVA_comb_mov', 'MVA_comb_prep'}; %%Save folders for each contrast
@@ -2881,7 +2809,6 @@ switch(what)
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Whole brain image reslicing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
     case 'suit_reslice_whole'
         
         sn=varargin{1};
@@ -2932,7 +2859,6 @@ switch(what)
         
         %function
         suit_reslice_dartel(job)
-        
     case 'suit_group_whole'
         
         %% Produces second-level contrasts. Edit contrast folders, image names, and subject nifti files.
@@ -2993,7 +2919,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'suit_estimate_whole'
         
         %%Contrast
@@ -3019,7 +2944,6 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'suit_surface_map_whole'
         
         %MANUALLY OPEN RESULTS IN SPM FIRST
@@ -3038,7 +2962,6 @@ switch(what)
         
         %% for within-matlab visualisation of flatmap, load respective 'spmT_0001_flatmap.mat'
         % then use suit_plotflatmap(flatmapVector, 'cmap', hot, 'cscale', [0 7.00], 'threshold', 3.48) replacing numbers with desired values.
-        
     case 'suit_roi_whole'
         
         dataFolder = {'data/Mov','data/Prep','data/PrepProd','data/ProdPrep','data/Error','data/Rest',... %folders containing data to be projected
@@ -3057,33 +2980,29 @@ switch(what)
             
         end
         
-        
-        
-        
-        
-        
-        
-    case 'subcortical_make_nii' %%%%%%%%%%%%%%%%%%% BEGINNING OF SUBCORTICAL ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%
+    case 'RSA' %----------------- BEGINNING OF RSA -----------------%
+    case 'subcortical_make_nii' %%% subcortical analysis - unzip aseg file
+        %unzips aseg.nii.gz into aseg.nii and moves to subcortical folder
         
         sn = varargin{1}; %requires recon-all to be completed through freesurfer for each participant, and for 'aseg' file to be moved to relevant directory
         
         %%Anatomical:
         try
-            source = fullfile(subcorticalAreaDir, subj_name{sn}, [subj_name{sn} '_' 'aseg.nii.gz']);
-            dest = fullfile(subcorticalAreaDir, subj_name{sn});
+            source = fullfile(subcorticalDir, subj_name{sn}, [subj_name{sn} '_' 'aseg.nii.gz']);
+            dest = fullfile(subcorticalDir, subj_name{sn});
             
             gunzip(source,dest); %unzip
             
             disp('segmentation unzip done')
         catch
             disp('No segmentation files. Most likely a typo in file name or missing destination directory!');
-        end;
-        
+        end
     case 'subcortical_make_structs' %extracts each subcortical structure from aseg file, and creates respective nii files
         
         sn = varargin{1};
         
-        subcortValues = [10, 11, 12, 13, 16, 17, 18, 26, 28, 30, 31, 49, 50, 51, 52, 53, 54, 58, 60, 87, 63];
+        subcortValues = cell2mat(subcortStructs(1,:));%take values from first row
+        subcortStructs = subcortStructs(2,:);%and names from second
         
         for i=1:length(subcortStructs)
             
@@ -3100,1401 +3019,13 @@ switch(what)
             
             spm_jobman('run',matlabbatch);
         end
-        
     case 'subcortical_reslice_structs' %reslices subcortical niftis into functional scan resolution
         
         sn = varargin{1};
         
         refImageDir = [glmDir, '/', subj_name{sn}]; %directories for functional reference image (beta 1)
-        subcortImageDir = [subcorticalAreaDir, '/', subj_name{sn}]; %and for subcortical images
-        
-        for r=1:length(allSubcortStructs) %loop through subcortical regions and reslice them to beta image resolution
-            
-            matlabbatch{1}.spm.spatial.realign.write.data = {[refImageDir, '/beta_0001.nii']; [subcortImageDir, '/', subj_name{sn}, '_', allSubcortStructs{r}, '.nii']};
-            matlabbatch{1}.spm.spatial.realign.write.roptions.which = [2 1];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.interp = 4;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.wrap = [0 0 0];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.mask = 1;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.prefix = 'r';
-            
-            spm_jobman('run',matlabbatch);
-            disp([allSubcortStructs{r} ' resliced'])
-        end
-        
-    case 'subcortical_voxel_counts' %provides number of voxels for each subcortical structure
-        
-        sn = varargin{1};
-        voxCount = nan(1,length(subcortStructs));
-        %         for i =anaSubj(1:end ~= 2) %for each subject...
-        for j=1:length(subcortStructs) %and each subcortical structure...
-            
-            %cd into relevant subject directory
-            cd([subcorticalDir, '/',  subj_name{sn}])
-            
-            %read in .nii file for each subcortical structure
-            vol = spm_vol([subj_name{sn}, '_', subcortStructs{j}, '.nii']);
-            readVol = spm_read_vols(vol);
-            
-            %count the number of non-zero elements
-            voxelCount = nnz(readVol);
-            
-            %add the count to matrix
-            voxCount(:,j) = voxelCount;
-            
-        end
-        %         end
-        
-        %add names of structures to top row of matrix and save to excel
-        voxCount = num2cell(voxCount);
-        voxCountSave = [subcortStructs; voxCount];
-        
-        cd([subcorticalPCMDir, '/' subj_name{sn}])
-        xlswrite([subj_name{sn} '_voxelCounts'], voxCountSave)
-        
-    case 'subcortical_voxel_counts_group' %like case above, but produces one big group excel sheet. Quite slow...
-        
-        %set voxCount to size subj x structure for later loop
-        groupVoxCount = nan(length(anaSubj),length(subcortStructs));
-        %loop counter for subject rows in excel sheet
-        loopCount = 1;
-        
-        for i =anaSubj(1:end ~= 2) %for each subject...
-            for j=1:length(subcortStructs) %and each subcortical structure...
-                
-                %cd into relevant subject directory
-                cd([subcorticalDir, '/',  subj_name{i}])
-                
-                %read in .nii file for each subcortical structure
-                vol = spm_vol(['r' subj_name{i}, '_', subcortStructs{j}, '.nii']);
-                readVol = spm_read_vols(vol);
-                
-                %count the number of non-zero elements
-                voxelCount = nnz(readVol);
-                
-                %add the count to matrix
-                groupVoxCount(loopCount,j) = voxelCount;
-                
-                
-                
-            end
-            %loop counter increase
-            loopCount = loopCount + 1;
-        end
-        
-        %add names of structures to top row of matrix and save to excel
-        groupVoxCount = num2cell(groupVoxCount);
-        voxCountSave = [subcortStructs; groupVoxCount];
-        
-        cd(subcorticalDir')
-        xlswrite('group_voxelCounts', voxCountSave)
-        
-        
-        
-        
-    case 'make_mask_subcorticalSearch'  %SUBCORTICAL SEARCHLIGHT ANALYSIS - Makes restricted analysis mask for MVA
-        
-        s=varargin{1};
-        
-        for i=1:length(subcortStructs)
-            funMask=fullfile(glmDir, subj_name{s},'maskbrain.nii');
-            omask=fullfile(subcorticalSearchDir, subj_name{s},['mr' subj_name{s} '_' subcortStructs{i} '.nii']); %output mask to be used in the future
-            subcort = fullfile(subcorticalSearchDir, subj_name{s},['r' subj_name{s} '_' subcortStructs{i} '.nii']);
-            
-            spm_imcalc({funMask,subcort},omask,'i1 >0.01 & i2 > 0.1',{}); %recorded activity in brain (grey + white matter)
-        end
-        
-    case 'MVA_search_subcorticalSearch' % Define the search lights for the MVA analysis
-        
-        s=varargin{1};
-        
-        for r = 1:length(subcortStructs)
-            
-            radius=16;
-            numVox=160;
-            cd(fullfile(subcorticalSearchDir, subj_name{s}));
-            V=spm_vol(['mr' subj_name{s} '_' subcortStructs{r} '.nii']); %if preceded by case MVA_mask
-            X=spm_read_vols(V);
-            [i,j,k]=ind2sub(size(X),find(X~=0));
-            vox=[i j k];
-            [LI,voxmin,voxmax,n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvox.nii');
-            save ([subj_name{s} '_' subcortStructs{r} '_' 'volsearch160.mat'], 'vox', 'LI', 'voxmin', 'voxmax', 'n')
-        end
-        
-    case 'MVA_do_overallMov_subcorticalSearch'                 % Conduct the classification analysis 4 sequences
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Comb_160_Mov.nii'])};
-            
-            
-            % Generate column indices for Cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            for i=1:nrruns
-                test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-                train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-            end;
-            
-            [row,col] = find(prod>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart)
-        end
-        
-    case 'MVA_do_overallPrep_subcorticalSearch'                 % Conduct the classification analysis 4 sequences
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Comb_160_Prep.nii'])};
-            
-            
-            % Generate column indices for Cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            for i=1:nrruns
-                test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-                train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-            end;
-            
-            [row,col] = find(prep>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart)
-        end
-        
-    case 'MVA_do_spatOneout_Mov_subcorticalSearch'
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Spat_160_Mov.nii'])};
-            
-            
-            % Generate column indices for cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            %%%
-            oneout=[1 0; 0 1];
-            oneout=repmat(oneout,1,12);
-            j=0;
-            for i=1:2:nrruns*2
-                j=j+1;
-                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-                
-                
-                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-                
-            end;
-            
-            [row,col] = find(prod>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart);
-            
-        end;
-        
-    case 'MVA_do_spatOneout_Prep_subcorticalSearch'
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Spat_160_Prep.nii'])};
-            
-            
-            % Generate column indices for cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            %%%
-            oneout=[1 0; 0 1];
-            oneout=repmat(oneout,1,12);
-            j=0;
-            for i=1:2:nrruns*2
-                j=j+1;
-                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-                
-                
-                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-                
-            end;
-            
-            [row,col] = find(prep>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart);
-            
-        end;
-        
-    case 'MVA_do_tempOneout_Mov_subcorticalSearch'
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Temp_160_Mov.nii'])};
-            
-            
-            % Generate column indices for cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            %%%
-            oneout=[1 1 0 0; 0 0 1 1];
-            oneout=repmat(oneout,1,6);
-            j=0;
-            for i=1:2:nrruns*2
-                j=j+1;
-                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-                
-                
-                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-                
-            end;
-            
-            [row,col] = find(prod>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart);
-            
-        end;
-        
-    case 'MVA_do_tempOneout_Prep_subcorticalSearch'
-        
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Temp_160_Prep.nii'])};
-            
-            
-            % Generate column indices for cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            %%%
-            oneout=[1 1 0 0; 0 0 1 1];
-            oneout=repmat(oneout,1,6);
-            j=0;
-            for i=1:2:nrruns*2
-                j=j+1;
-                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-                
-                
-                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-                
-            end;
-            
-            [row,col] = find(prep>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart);
-            
-        end;
-        
-    case 'MVA_do_Int_Mov_subcorticalSearch'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs);
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Int_160_Mov.nii'])};
-            
-            
-            % Generate column indices for Cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            for i=1:nrruns
-                test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-                train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-            end;
-            
-            [row,col] = find(prod>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat'])...
-                ,Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
-            telapsed = toc(tstart)
-        end
-        
-    case 'MVA_do_Int_Prep_subcorticalSearch'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
-        s=varargin{1};
-        
-        for r=1:length(subcortStructs)
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(subcorticalSearchDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Int_160_Prep.nii'])};
-            
-            
-            % Generate column indices for Cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            for i=1:nrruns
-                test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-                train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-            end;
-            
-            [row,col] = find(prep>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end;
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat'])...
-                ,Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
-            telapsed = toc(tstart)
-        end
-        
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-    case 'MVA_zValue_subcorticalSearch'
-        
-        s=varargin{1};
-        cd(fullfile(subcorticalSearchDir,subj_name{s}));
-        
-        for r=1:length(subcortStructs)
-            
-            numTests=6;
-            numCat=4;
-            mu=1/numCat; %mu=0.25;
-            N=numTests*numCat;
-            sigma=sqrt(mu*(1-mu)*1/N);
-            
-            images= {'_accuracy_Comb_160_Mov','_accuracy_Comb_160_Prep','_accuracy_Int_160_Mov','_accuracy_Int_160_Prep'};
-            %         images= {'_accuracy_Comb_160_Mov','_accuracy_Comb_160_Prep'};
-            
-            outimages={'_zacc_Comb_160_Mov','_zacc_Comb_160_Prep','_zacc_Int_160_Mov','_zacc_Int_160_Prep'};
-            %         outimages={'_zacc_Comb_160_Mov','_zacc_Comb_160_Prep'};
-            
-            
-            for j=1:numel(images)
-                input_image= fullfile([subj_name{s} '_' subcortStructs{r} images{j} '.nii']);
-                output_image= fullfile([subj_name{s} '_' subcortStructs{r} outimages{j} '.nii']);
-                spmj_imcalc_mtx(input_image, output_image,...
-                    sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
-            end
-        end
-        
-    case 'MVA_zValue_oneOut_subcorticalSearch'
-        
-        s=varargin{1};
-        cd(fullfile(subcorticalSearchDir,subj_name{s}));
-        
-        for r=1:length(subcortStructs)
-            
-            takeOneOutIter=2;
-            numTests=6;
-            numCat=2;
-            mu=1/numCat; %mu=0.5;
-            N=numTests*numCat*takeOneOutIter;
-            sigma=sqrt(mu*(1-mu)*1/N);
-            
-            images= {'_accuracy_Spat_160_Mov','_accuracy_Spat_160_Prep','_accuracy_Temp_160_Mov','_accuracy_Temp_160_Prep'};
-            
-            outimages={'_zacc_Spat_160_Mov','_zacc_Spat_160_Prep','_zacc_Temp_160_Mov','_zacc_Temp_160_Prep'};
-            
-            
-            for j=1:numel(images)
-                input_image= fullfile([subj_name{s} '_' subcortStructs{r} images{j} '.nii']);
-                output_image= fullfile([subj_name{s} '_' subcortStructs{r} outimages{j} '.nii']);
-                spmj_imcalc_mtx(input_image, output_image,...
-                    sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
-            end
-        end
-        
-    case 'MVA_smooth_subcorticalSearch' %%%Smoothing in subject space
-        
-        for r=1:length(subcortStructs)
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Comb_160_Mov.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Comb_160_Mov.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Comb_160_Prep.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Comb_160_Prep.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Spat_160_Mov.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Spat_160_Mov.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Spat_160_Prep.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Spat_160_Prep.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Temp_160_Mov.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Temp_160_Mov.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Temp_160_Prep.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Temp_160_Prep.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Int_160_Mov.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Int_160_Mov.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            s=varargin{1};
-            comb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_zacc_Int_160_Prep.nii']); %%MVPA smoother
-            scomb=fullfile(subcorticalSearchDir, subj_name{s},[subj_name{s} '_' subcortStructs{r} '_szacc_Int_160_Prep.nii']);
-            spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
-            
-            %smooth other images here as required
-            
-        end
-        
-    case 'MNI_normalisation_subcorticalSearch'
-        
-        s=varargin{1};
-        mkdir(fullfile(subcorticalSearchGroupDir,'data')); % folder for each contrast
-        
-        %MVPA accuracy maps
-        images= {'szacc_Comb_160_Mov.nii','szacc_Comb_160_Prep.nii',...
-            'szacc_Int_160_Mov.nii','szacc_Int_160_Prep.nii',...
-            'szacc_Spat_160_Mov.nii','szacc_Spat_160_Prep.nii',...
-            'szacc_Temp_160_Mov.nii','szacc_Temp_160_Prep.nii'}; % please add other images as required, e.g. spmT_...
-        
-        for r=1:length(subcortStructs)
-            for i=1:length(images)
-                anaImages{1} = images{i};
-                defor= fullfile(anatDir, subj_name{s}, [subj_name{s}, '_anatomical_seg_sn.mat']);
-                for j=1:numel(anaImages)
-                    [~,name,ext]=spm_fileparts(anaImages{j});
-                    sn_images{j}= fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_' anaImages{j}]);
-                    out_images{j}= fullfile(subcorticalSearchGroupDir,[name '_' subj_name{s} '_' subcortStructs{r} '.nii']);
-                    spmj_normalization_write(defor, sn_images,'outimages',out_images); %Trilinear interpolation
-                end
-            end
-        end
-        
-    case 'MVA_group_subcorticalSearch'
-        dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
-        images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep';'szacc_Int_160_Mov';'szacc_Int_160_Prep';'szacc_Spat_160_Mov';'szacc_Spat_160_Prep';'szacc_Temp_160_Mov';'szacc_Temp_160_Prep'};
-        
-        %         dataDir = {'MVA_comb_mov', 'MVA_comb_prep'}; %%Save folders for each contrast
-        %         images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep'};
-        
-        %ONLY PARTICIPANTS WHO MODULATED TIMING
-        subNii = {'_s03.nii','_s05.nii','_s06.nii','_s07.nii','_s09.nii','_s10.nii','_s13.nii','_s16.nii','_s17.nii','_s18.nii','_s20.nii','_s21.nii','_s22.nii','_s25.nii','_s26.nii'...
-            '_s31.nii','_s32.nii','_s34.nii','_s36.nii','_s38.nii','_s39.nii','_s40.nii','_s41.nii','_s42.nii'}; %3 5 6 7 9 10 13 16 17 18 20 21 22 25 26 31 32 34 36 38 39 40 41 42
-        
-        %ALL PARTICIPANTS regardless of timing modulation ***TO DO***
-        %         subNii = {'_s03.nii','_s05.nii','_s06.nii','_s07.nii','_s09.nii','_s10.nii','_s13.nii','_s16.nii','_s17.nii','_s18.nii','_s20.nii','_s21.nii','_s22.nii','_s25.nii','_s26.nii'...
-        %             '_s31.nii','_s32.nii','_s34.nii','_s36.nii','_s38.nii','_s39.nii','_s40.nii','_s41.nii'}; %3 4 5 6 7 9 10 11 12 13 15 16 17 18 20 21 22 25 26 31 32 33 34 36 37 38 39 40 41 42
-        
-        contrastN = length(dataDir);
-        images = repmat(images,1,length(subNii));
-        subNii = repmat (subNii,length(dataDir),1);
-        fileName = strcat (images,subNii);  %%Concatenate contrast files and subject names
-        
-        for i=1:contrastN  %%Loop across contrasts
-            glmscndDir = fullfile(subcorticalSearchGroupDir, dataDir(i));
-            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;  %Adjust directory
-            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (subcorticalSearchGroupDir, fileName(i,:))';  %%Select files from matrix
-            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
-            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
-            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
-            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
-            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
-            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
-            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
-            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
-            
-            spm_jobman('run',matlabbatch);
-        end
-        
-        %AVERAGE GROUP DATA
-        %open spm fmri and select 'imcalc'
-        %choose all images from participants of interest
-        %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+16+i17+i18+i19+i20+i21+i22+i23+i24)/24
-        
-        
-        
-        
-        
-        
-        
-    case 'make_mask_subcorticalArea'  %SUBCORTICAL SEARCHLIGHT ANALYSIS - Makes restricted analysis mask for MVA
-        
-        s=varargin{1};
-        
-        for i=1:length(allSubcortStructs);
-            funMask=fullfile(glmDir, subj_name{s},'maskbrain.nii');
-            omask=fullfile(subcorticalAreaDir, subj_name{s},['mr' subj_name{s} '_' allSubcortStructs{i} '.nii']); %output mask to be used in the future
-            subcort = fullfile(subcorticalAreaDir, subj_name{s},['r' subj_name{s} '_' allSubcortStructs{i} '.nii']);
-            
-            spm_imcalc({funMask,subcort},omask,'i1 >0.01 & i2 > 0.1',{}); %recorded activity in brain (grey + white matter)
-        end
-        
-    case 'subcortical_define_mva_area' %SUBCORTICAL AREA ANALYSIS - defines area in each subcortical region to be passed to later MVA cases
-        
-        s=varargin{1};
-        
-        % load respective subcortical .nii and extract x y z coordinates for voxels
-        for r=1:length(subcortStructs)
-            cd(fullfile(subcorticalAreaDir, subj_name{s}));
-            V=spm_vol(['mr' subj_name{s} '_' subcortStructs{r} '.nii']);
-            X=spm_read_vols(V);
-            [i,j,k]=ind2sub(size(X),find(X~=0));
-            vox=[i j k];
-            
-            LI{1} = sub2ind(V.dim,vox(:,1),vox(:,2),vox(:,3)); %convert x y z coordinates into linear index for voxels
-            voxmin = min(vox,[],1); %min x y z coordinates for each voxel
-            voxmax = max(vox,[],1); %max as above
-            n = size(vox,1); %number of voxels
-            
-            save(sprintf('%s_decodeArea_%s.mat',subj_name{s},subcortStructs{r}), 'vox', 'LI', 'voxmin', 'voxmax', 'n')
-            disp([subcortStructs{r} ' done'])
-        end
-        
-    case 'MVA_do_overallMov_subcorticalArea' %runs combMov LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s})); %load SPM data
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,nrruns) runBSL];
-        
-        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for Cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        for i=1:nrruns
-            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-        end;
-        
-        [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        combMov = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_combMov_subcortical'],'combMov')
-        
-    case 'MVA_do_overallPrep_subcorticalArea' %runs combPrep LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,nrruns) runBSL];
-        
-        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for Cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        for i=1:nrruns
-            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-        end;
-        
-        [row,col] = find(prep>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        combPrep = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_combPrep_subcortical'],'combPrep')
-        
-    case 'MVA_do_spatOneout_Mov_subcorticalArea' %runs spatMov LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,nrruns) runBSL];
-        
-        c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        %%%
-        oneout=[1 0; 0 1];
-        oneout=repmat(oneout,1,12);
-        j=0;
-        for i=1:2:nrruns*2
-            j=j+1;
-            test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-            test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-            
-            
-            train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-            train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-            
-        end;
-        
-        [row,col] = find(prod>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        spatMov = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_spatMov_subcortical'],'spatMov')
-        
-    case 'MVA_do_spatOneout_Prep_subcorticalArea' %runs spatPrep LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,nrruns) runBSL];
-        
-        c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        out = {fullfile(glmDir, subj_name{s}, [subj_name{s}, '_accuracy_Spat_160_Prep.nii'])};
-        
-        
-        % Generate column indices for cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        %%%
-        oneout=[1 0; 0 1];
-        oneout=repmat(oneout,1,12);
-        j=0;
-        for i=1:2:nrruns*2
-            j=j+1;
-            test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-            test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-            
-            
-            train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-            train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-            
-        end;
-        
-        [row,col] = find(prep>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        spatPrep = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_spatPrep_subcortical'],'spatPrep')
-        
-    case 'MVA_do_tempOneout_Mov_subcorticalArea' %runs tempMov LDA on all voxels within each subcortical region
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,nrruns) runBSL];
-        
-        c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        %%%
-        oneout=[1 1 0 0; 0 0 1 1];
-        oneout=repmat(oneout,1,6);
-        j=0;
-        for i=1:2:nrruns*2
-            j=j+1;
-            test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-            test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-            
-            
-            train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-            train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-            
-        end;
-        
-        [row,col] = find(prod>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        tempMov = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_tempMov_subcortical'],'tempMov')
-        
-    case 'MVA_do_tempOneout_Prep_subcorticalArea' %runs tempPrep LDA on all voxels within each subcortical region
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,nrruns) runBSL];
-        
-        c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        %%%
-        oneout=[1 1 0 0; 0 0 1 1];
-        oneout=repmat(oneout,1,6);
-        j=0;
-        for i=1:2:nrruns*2
-            j=j+1;
-            test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
-            test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
-            
-            
-            train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
-            train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
-            
-        end;
-        
-        [row,col] = find(prep>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = combinedclass(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        tempPrep = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_tempPrep_subcortical'],'tempPrep')
-        
-    case 'MVA_do_Int_Mov_subcorticalArea' %runs intMov LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s})); %load SPM data
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,nrruns) runBSL];
-        
-        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for Cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        for i=1:nrruns
-            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-        end;
-        
-        [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = prepProd2_combinedclass_corrected4Main(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        intMov = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_intMov_subcortical'],'intMov')
-        
-    case 'MVA_do_Int_Prep_subcorticalArea' %runs intPrep LDA on all voxels within each subcortical region
-        
-        s=varargin{1};
-        
-        cd(fullfile(glmDir, subj_name{s}));
-        load SPM;
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,nrruns) runBSL];
-        
-        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        % Generate column indices for Cross-validation, where
-        % cell i contains column indices of the respective test and
-        % train set
-        for i=1:nrruns
-            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-        end;
-        
-        [row,col] = find(prep>0);
-        P={SPM.Vbeta(1:126).fname}';
-        Pselect=[];
-        for i=1:length(col)
-            Pselect{i,1}= P{col(i)};
-        end;
-        
-        predcat = zeros(length(subcortStructs),1);
-        
-        %%% loop across decoding areas for respective subcortical regions
-        for r=1:length(subcortStructs)
-            
-            S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-            Vin = spm_vol(char(Pselect));
-            
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
-            
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-            end
-            
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            
-            pred = prepProd2_combinedclass_corrected4Main(X, c, run, train, test); %classifier function which gives us accuracy value as a decimal
-            % chance value = 0.25
-            %             disp(['Prediction value ' num2str(pred) ' in ' subcortStructs{r}]) %display all in window
-            
-            %%%TO DO%%%
-            predcat(r) = pred; %save prediction value into variable
-        end
-        
-        intPrep = [subcortStructs', num2cell(predcat)]; %save participant's decoding values to .mat file
-        cd([subcorticalAreaDir, '/', subj_name{s}])
-        save([subj_name{s}, '_intPrep_subcortical'],'intPrep')
-        
-    case 'MVA_group_subcorticalArea'
-        
-        classifiers = {'combMov', 'combPrep', 'spatMov', 'spatPrep', 'tempMov', 'tempPrep', 'intMov', 'intPrep'};
-        combMovGroup = subcortStructs'; combPrepGroup = subcortStructs'; spatMovGroup = subcortStructs'; spatPrepGroup = subcortStructs';
-        tempMovGroup = subcortStructs'; tempPrepGroup = subcortStructs'; intMovGroup = subcortStructs'; intPrepGroup = subcortStructs';
-        
-        for s = anaSubj(1:end ~= 2)
-            cd(fullfile(subcorticalAreaDir, subj_name{s}))
-            load([subj_name{s} '_combMov_subcortical.mat']); load([subj_name{s} '_combPrep_subcortical.mat'])
-            load([subj_name{s} '_spatMov_subcortical.mat']); load([subj_name{s} '_spatPrep_subcortical.mat'])
-            load([subj_name{s} '_tempMov_subcortical.mat']); load([subj_name{s} '_tempPrep_subcortical.mat'])
-            load([subj_name{s} '_intMov_subcortical.mat']); load([subj_name{s} '_intPrep_subcortical.mat'])
-            
-            combMovGroup = [combMovGroup combMov(:,2)]; combPrepGroup = [combPrepGroup combPrep(:,2)];
-            spatMovGroup = [spatMovGroup spatMov(:,2)]; spatPrepGroup = [spatPrepGroup spatPrep(:,2)];
-            tempMovGroup = [tempMovGroup tempMov(:,2)]; tempPrepGroup = [tempPrepGroup tempPrep(:,2)];
-            intMovGroup = [intMovGroup intMov(:,2)]; intPrepGroup = [intPrepGroup intPrep(:,2)];
-            
-        end
-        
-        cd(subcorticalAreaDir)
-        save('combMov_subcortical', 'combMovGroup'); save('combPrep_subcortical', 'combPrepGroup')
-        save('spatMov_subcortical', 'spatMovGroup'); save('spatPrep_subcortical', 'spatPrepGroup')
-        save('tempMov_subcortical', 'tempMovGroup'); save('tempPrep_subcortical', 'tempPrepGroup')
-        save('intMov_subcortical', 'intMovGroup'); save('intPrep_subcortical', 'intPrepGroup')
-        
-    case 'MVA_zacc_subcorticalArea'
-        
-        %%% 25% chance
-        cd(subcorticalAreaDir);
-        
-        load('combMov_subcortical.mat'); load('combPrep_subcortical.mat')
-        load('intMov_subcortical.mat'); load('intPrep_subcortical.mat')
-        
-        numTests=6;
-        numCat=4;
-        mu=1/numCat; %mu=0.25;
-        N=numTests*numCat;
-        sigma=sqrt(mu*(1-mu)*1/N);
-        
-        %         sprintf('(X./X).*((X-%d)/%d)',mu, sigma); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
-        combMovGroupZacc = (cell2mat(combMovGroup(:,2:24))-mu)/sigma;
-        combPrepGroupZacc = (cell2mat(combPrepGroup(:,2:24))-mu)/sigma;
-        intMovGroupZacc = (cell2mat(intMovGroup(:,2:24))-mu)/sigma;
-        intPrepGroupZacc = (cell2mat(intPrepGroup(:,2:24))-mu)/sigma;
-        
-        combMovGroupZacc = [combMovGroup(:,1), num2cell(combMovGroupZacc)]';
-        combPrepGroupZacc = [combPrepGroup(:,1), num2cell(combPrepGroupZacc)]';
-        intMovGroupZacc = [intMovGroup(:,1), num2cell(intMovGroupZacc)]';
-        intPrepGroupZacc = [intPrepGroup(:,1), num2cell(intPrepGroupZacc)]';
-        
-        save('zacc_combMov_subcortical', 'combMovGroupZacc'); save('zacc_combPrep_subcortical', 'combPrepGroupZacc')
-        save('zacc_intMov_subcortical', 'intMovGroupZacc'); save('zacc_intPrep_subcortical', 'intPrepGroupZacc')
-        
-        xlswrite('zacc_combMov_subcortical', combMovGroupZacc); xlswrite('zacc_combPrep_subcortical', combPrepGroupZacc)
-        xlswrite('zacc_intMov_subcortical', intMovGroupZacc); xlswrite('zacc_intPrep_subcortical', intPrepGroupZacc)
-        
-        %%% 50% chance
-        cd(subcorticalAreaDir);
-        
-        load('spatMov_subcortical.mat'); load('spatPrep_subcortical.mat')
-        load('tempMov_subcortical.mat'); load('tempPrep_subcortical.mat')
-        
-        takeOneOutIter=2;
-        numTests=6;
-        numCat=2;
-        mu=1/numCat; %mu=0.5;
-        N=numTests*numCat*takeOneOutIter;
-        sigma=sqrt(mu*(1-mu)*1/N);
-        
-        %         sprintf('(X./X).*((X-%d)/%d)',mu, sigma); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
-        spatMovGroupZacc = (cell2mat(spatMovGroup(:,2:24))-mu)/sigma;
-        spatPrepGroupZacc = (cell2mat(spatPrepGroup(:,2:24))-mu)/sigma;
-        tempMovGroupZacc = (cell2mat(tempMovGroup(:,2:24))-mu)/sigma;
-        tempPrepGroupZacc = (cell2mat(tempPrepGroup(:,2:24))-mu)/sigma;
-        
-        spatMovGroupZacc = [spatMovGroup(:,1), num2cell(spatMovGroupZacc)]';
-        spatPrepGroupZacc = [spatPrepGroup(:,1), num2cell(spatPrepGroupZacc)]';
-        tempMovGroupZacc = [tempMovGroup(:,1), num2cell(tempMovGroupZacc)]';
-        tempPrepGroupZacc = [tempPrepGroup(:,1), num2cell(tempPrepGroupZacc)]';
-        
-        save('zacc_spatMov_subcortical', 'spatMovGroupZacc'); save('zacc_spatPrep_subcortical', 'spatPrepGroupZacc')
-        save('zacc_tempMov_subcortical', 'tempMovGroupZacc'); save('zacc_tempPrep_subcortical', 'tempPrepGroupZacc')
-        
-        xlswrite('zacc_spatMov_subcortical', spatMovGroupZacc); xlswrite('zacc_spatPrep_subcortical', spatPrepGroupZacc)
-        xlswrite('zacc_tempMov_subcortical', tempMovGroupZacc); xlswrite('zacc_tempPrep_subcortical', tempPrepGroupZacc)
-        
-        
-        
-        
-        
-        
-    case 'RSA_dataPrep' %%%%%%%%%%%%%%%%%% Beginning of RSA analysis %%%%%%%%%%%%%%%%%%%%%%%
-        
-        %standard function to convert fMRI data to a format compatible with RSA toolbox
-        userOptions = prepProdRSA_defineUserOptions(); %this function must be modified for each project
-        betaCorrespondence = prepProdRSA_betaCorrespondence(); %likewise
-        
-        fullBrainVols = rsa.fmri.fMRIDataPreparation(betaCorrespondence, userOptions);
-        binaryMasks_nS = rsa.fmri.fMRIMaskPreparation(userOptions);
-        rsa.fmri.fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence, userOptions); %very long
-        
-    case 'RSA_calculateRDMs'
-        cd([baseDir filesep 'imaging'])
-        load([baseDir '/imaging/ImageData/prepProd_ImageData.mat']); load([baseDir '/imaging/ImageData/prepProd_Masks.mat'])
-        load([baseDir '/imaging/ImageData/prepProd_responsePatterns.mat']);
-        
-        userOptions = prepProdRSA_defineUserOptions();
-        betaCorrespondence = prepProdRSA_betaCorrespondence();
-        
-        RDMs  = rsa.constructRDMs(responsePatterns, betaCorrespondence, userOptions);
-        sRDMs = rsa.rdm.averageRDMs_subjectSession(RDMs, 'session');
-        RDMs  = rsa.rdm.averageRDMs_subjectSession(RDMs, 'session', 'subject');
-        
-        Models = rsa.constructModelRDMs(modelRDMs(), userOptions);
-        rsa.figureRDMs(RDMs, userOptions, struct('fileName', 'RoIRDMs', 'figureNumber', 1));
-        %         rsa.figureRDMs(Models, userOptions, struct('fileName', 'ModelRDMs', 'figureNumber', 2));
-        
-        
-        
-    case 'pcm_sub_make_nii' %SUBCORTICAL: unzips aseg file ready for parcellation
-        
-        sn = varargin{1}; %requires recon-all to be completed through freesurfer for each participant, and for 'aseg' file to be moved to relevant directory
-        
-        %%Anatomical:
-        try
-            source = fullfile(subcorticalPCMDir, subj_name{sn}, [subj_name{sn} '_' 'aseg.nii.gz']);
-            dest = fullfile(subcorticalPCMDir, subj_name{sn});
-            
-            gunzip(source,dest); %unzip
-            
-            disp('segmentation unzip done')
-        catch
-            disp('No aseg file found. Most likely a typo in file name or missing destination directory!');
-        end;
-        
-    case 'pcm_sub_make_structs' %extracts each subcortical structure from aseg file, and creates respective nii files
-        
-        sn = varargin{1};
-        
-        subcortValues = [10, 11, 12, 13, 16, 17, 18, 26, 28, 30, 31, 49, 50, 51, 52, 53, 54, 58, 60, 87, 63];
-        
-        for i=1:length(allSubcortStructs)
-            
-            cd([subcorticalPCMDir, '/', subj_name{sn}])
-            
-            matlabbatch{1}.spm.util.imcalc.input = {[subcorticalPCMDir, '/' subj_name{sn} '/' subj_name{sn}, '_aseg.nii,1']};
-            matlabbatch{1}.spm.util.imcalc.output = [subj_name{sn}, '_', allSubcortStructs{i}];
-            matlabbatch{1}.spm.util.imcalc.expression = ['i1 == ', num2str(subcortValues(i))];
-            matlabbatch{1}.spm.util.imcalc.var = struct('name', {}, 'value', {});
-            matlabbatch{1}.spm.util.imcalc.options.dmtx = 0;
-            matlabbatch{1}.spm.util.imcalc.options.mask = 0;
-            matlabbatch{1}.spm.util.imcalc.options.interp = 1;
-            matlabbatch{1}.spm.util.imcalc.options.dtype = 4;
-            
-            spm_jobman('run',matlabbatch);
-        end
-        
-    case 'pcm_sub_reslice' %reslices subcortical niftis into functional scan resolution
-        
-        sn = varargin{1};
-        
-        refImageDir = [glmDir, '/', subj_name{sn}]; %directories for functional reference image (beta 1)
-        subcortImageDir = [subcorticalPCMDir, '/', subj_name{sn}]; %and for subcortical images
+        subcortImageDir = [subcorticalDir, '/', subj_name{sn}]; %and for subcortical images
+        subcortStructs = subcortStructs(2,:);%names from second row
         
         for r=1:length(subcortStructs) %loop through subcortical regions and reslice them to beta image resolution
             
@@ -4508,762 +3039,44 @@ switch(what)
             spm_jobman('run',matlabbatch);
             disp([subcortStructs{r} ' resliced'])
         end
-        
-    case 'pcm_sub_make_mask'  %makes restricted subcortical analysis mask for MVA
+    case 'subcortical_make_mask'  %masks subcortical niftis using grey matter mask
         
         s=varargin{1};
+        subcortStructs = subcortStructs(2,:);%names from second row
         
-        for i=1:length(subcortStructs);
+        for i=1:length(subcortStructs)
             funMask=fullfile(glmDir, subj_name{s},'maskbrain.nii');
-            omask=fullfile(subcorticalPCMDir, subj_name{s},['mr' subj_name{s} '_' subcortStructs{i} '.nii']); %output mask to be used in the future
-            subcort = fullfile(subcorticalPCMDir, subj_name{s},['r' subj_name{s} '_' subcortStructs{i} '.nii']);
+            omask=fullfile(subcorticalDir, subj_name{s},['mr' subj_name{s} '_' subcortStructs{i} '.nii']); %output mask to be used in the future
+            subcort = fullfile(subcorticalDir, subj_name{s},['r' subj_name{s} '_' subcortStructs{i} '.nii']);
             
             spm_imcalc({funMask,subcort},omask,'i1 >0.01 & i2 > 0.1',{}); %recorded activity in brain (grey + white matter)
         end
-        
-    case 'pcm_sub_makeROIs' %uses region toolbox to define R struct for analysis
+    case 'subcortical_makeROIs' %uses region toolbox to define R struct for prewhitening
         
         s=varargin{1};
+        subcortStructs = subcortStructs(2,:);%names from second row
         R=cell(length(subcortStructs), 1);
-        cd(fullfile(subcorticalPCMDir, subj_name{s}))
+        cd(fullfile(subcorticalDir, subj_name{s}))
         
         for i=1:length(subcortStructs)%for each subcort region
-            R{i} = region('roi_image',[subj_name{s} '_' subcortStructs{i} '.nii'],1,subcortStructs{i}); %'mr'
+            R{i} = region('roi_image',['mr' subj_name{s} '_' subcortStructs{i} '.nii'],1,subcortStructs{i});
             R{i}.name = [subj_name{s} '_' subcortStructs{i}]; %use toolbox to define, then add name
         end%for each subcort region
         
-        R = region_calcregions(R, 'voxelspace', fullfile(glmDir, subj_name{s}, 'beta_0001.nii'));
+        R = region_calcregions(R);%because we reslice, we don't need voxelspace option
+        %R = region_calcregions(R, 'voxelspace', fullfile(glmDir, subj_name{s}, 'beta_0001.nii'));
         
         out = [roiSubDir '/' subj_name{s} '_subcortical_roi'];
         save(strjoin(out,''), 'R'); %save as participant file which holds all regions
+    case 'subcortical_preWhiten' %pre-whiten data from subcortical ROIs ready for PCM
         
-    case 'pcm_sub_preWhiten' %pre-whiten data from subcortical ROIs ready for PCM
-        
-        T = []; %s=varargin{1};
+        T = []; blueBear = varargin{1}; %s=varargin{1};
         
         for s=anaSubj
             fprintf('%d.',s); fprintf('/n')
-            load([glmDir, '/', subj_name{s}, '/', 'SPM.mat'])
-            load([roiSubDir, '/', subj_name{s}, '_subcortical_roi.mat'])
-            
-            V = SPM.xY.VY;
-            for r=1:length(R)
-                Y = region_getdata(V,R{r});
-                
-                [betaW,resMS,~,beta] = rsa.spm.noiseNormalizeBeta(Y,SPM);
-                
-                S.betaW = {betaW};
-                S.betaUW = {bsxfun(@rdivide,beta,sqrt(resMS))};
-                S.betaRAW = {beta};
-                S.resMS = {resMS};
-                S.SN = s;
-                S.region = r;
-                
-                T = addstruct(T,S);
-                fprintf('%d.',r)
-            end
-            fprintf('/n');
-        end
-        
-        save(fullfile(roiSubDir, 'preWhitened_betas.mat'),'-struct','T');
-        
-    case 'pcm_sub_genModels' %%%%%%%%%%%%%%%%%% Beginning of PCM analysis %%%%%%%%%%%%%%%%%%
-        
-        prepProdSimu_genmodels('ordPrep')
-        prepProdSimu_genmodels('ordProd')
-        prepProdSimu_genmodels('ordSwitch')
-        
-        prepProdSimu_genmodels('tempPrep')
-        prepProdSimu_genmodels('tempProd')
-        prepProdSimu_genmodels('tempSwitch')
-        
-        prepProdSimu_genmodels('intPrep')
-        prepProdSimu_genmodels('intProd')
-        prepProdSimu_genmodels('intSwitch')
-        
-    case 'pcm_sub_fitModels_Prep' %PCM during prep phase only (4 conditions)
-        
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        
-        %load subcortical data for analysis
-        W = load(fullfile(roiSubDir, 'preWhitened_betas.mat'));
-        
-        %define condition variables
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,length(run)) runBSL];
-        
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(subcortStructs)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
-            end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
-            end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %M{end+1}.type       = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Preparation in ' subcortStructs{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*1; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/subcortical/' subcortStructs{r} '_prepPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
-        end
-        
-    case 'pcm_sub_fitModels_Prod' %PCM during prep phase only (4 conditions)
-        
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        
-        %load subcortical data for analysis
-        W = load(fullfile(roiSubDir, 'preWhitened_betas.mat'));
-        
-        %define condition variables
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,length(run)) runBSL];
-        
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(subcortStructs)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
-            end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
-            end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            %             C= pcm_indicatorMatrix('allpairs',[1:4]');
-            %             [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            %             subplot(2,4,2);
-            %             plot(COORD(:,1),COORD(:,2),'o');
-            %             axis equal;
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %M{end+1}.type       = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Production in ' subcortStructs{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*2; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/subcortical/' subcortStructs{r} '_prodPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
-        end
-        
-    case 'pcm_sub_fitModels_PrepxProd' %PCM script - fits models to data (4 sequences x prepProd)
-        
-        models = prepProdSimu_loadModels(modelDir);
-        
-        %         anaSubj = [3, 5, 6, 7, 9];
-        
-        for r=1:length(subcortStructs)
-            %         for r=6;
-            
-            disp(['analysing ' subcortStructs{r}])
-            
-            %load subcortical data for analysis
-            loopCounter = 1;
-            for s=anaSubj
-                
-                cd(fullfile(glmDir, subj_name{s})); %load SPM data
-                load SPM;
-                nrruns=length(SPM.nscan);
-                
-                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-                prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-                prep=[repmat(prep,1,nrruns) runBSL];
-                
-                prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-                prod=[repmat(prod,1,nrruns) runBSL];
-                
-                c=repmat(1:8,1,nrruns)'; % extract conditions (leave out errors!)
-                run=[1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-                
-                [M, R] = prepProdSimu_prepModels(models,run,c);
-                
-                [~,prepCol] = find(prep>0); prepCol = reshape(prepCol,4,[]);
-                [~,prodCol] = find(prod>0); prodCol = reshape(prodCol,4,[]);
-                col = [prepCol; prodCol]; col = reshape(col,1,[]);
-                
-                
-                P={SPM.Vbeta(1:126).fname}';
-                Pselect=[];
-                for i=1:length(col)
-                    Pselect{i,1}= P{col(i)};
-                end
-                
-                S = load(fullfile(subcorticalAreaDir,subj_name{s},[subj_name{s} '_decodeArea_' subcortStructs{r} '.mat']));
-                Vin = spm_vol(char(Pselect));
-                
-                %extract voxels in decoding area from beta files and pass to MVPA function
-                linVox=unique(cat(2,S.LI{:})');
-                [I,J,K]=ind2sub(Vin(1).dim,linVox);
-                X = zeros(length(linVox),length(Vin));
-                
-                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-                end
-                
-                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-                nanidx = unique(nanidx);
-                X(nanidx,:) = [];
-                Y{:,loopCounter}=X';
-                
-                loopCounter = loopCounter+1;
-            end%subj loop
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
-            end;
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(3,7,[1, 8]);
-            H = eye(8)-ones(8)/8;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            C= pcm_indicatorMatrix('allpairs',[1:8]');
-            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            subplot(3,7,15);
-            plot(COORD(:,1),COORD(:,2),'o');
-            axis equal;
-            
-            % visualise models
-            subplot(3,7,2);
-            imagesc(R.orderPrepModel.G);
-            title('Order Prep')
-            
-            subplot(3,7,9);
-            imagesc(R.orderProdModel.G);
-            title('Order Prod')
-            
-            subplot(3,7,16);
-            imagesc(R.orderMaintModel.G);
-            title('Order Maint')
-            
-            subplot(3,7,3);
-            imagesc(R.timingPrepModel.G);
-            title('Timing Prep')
-            
-            subplot(3,7,10);
-            imagesc(R.timingProdModel.G);
-            title('Timing Prod')
-            
-            subplot(3,7,17);
-            imagesc(R.timingMaintModel.G);
-            title('Timing Maint')
-            
-            subplot(3,7,4);
-            imagesc(R.integratedPrepModel.G);
-            title('Integrated Prep')
-            
-            subplot(3,7,11);
-            imagesc(R.integratedProdModel.G);
-            title('Integrated Prod')
-            
-            subplot(3,7,18);
-            imagesc(R.integratedMaintModel.G);
-            title('Integrated Maint')
-            
-            % Treat the run effect as random or fixed?
-            % We are using a fixed run effect here, as we are not interested in the
-            % activity relative the the baseline (rest) - so as in RSA, we simply
-            % subtract out the mean patttern across all conditions.
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(3,7,[5 6 7 12 13 14 19 20 21]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(subcortStructs{r})
-            
-        end
-        
-    case 'pcm_sub_plotGroup'
-        
-        phase = {'Preparation', 'Production'};
-        updatedOrder = [1 2 7 8 5 6 9 10 3 4 11 12 17 18 15 16 19 20 13 14]; %order regions to be nicer to visualise when plotted
-        loopCounter = 1;
-        
-        %load prep and prod for all regions
-        pcmDataDir = [pcmDir '/data/subcortical']; %PCM data directory
-        cd(pcmDataDir)
-        files = dir('*.mat');
-        for i=updatedOrder%load data from ROIs into struct
-            Y = load(files(i).name);
-            R(loopCounter) = Y;
-            loopCounter = loopCounter + 1;
-        end
-        
-        subcortStructs = regexprep(subcortStructs, '_',' '); %change underscores to spaces in title names
-        
-        figure
-        for i=1:length(R)/2
-            subplot(5,2,i)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' subcortStructs{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=11:length(R)
-            subplot(5,2,i-10)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' subcortStructs{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=1:length(R)/2
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(5,2,i);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' subcortStructs{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=11:length(R)
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(5,2,i-10);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' subcortStructs{unique(R(i).T.region)}])
-        end
-        
-        
-    case 'pcm_defineSearchLight' % Define the search lights for the PCM analysis
-        
-        s=varargin{1};
-        cd(fullfile(subcorticalPCMDir, subj_name{s}));
-        load(fullfile(roiSubDir, [subj_name{s}, '_subcortical_roi.mat']), 'R')
-        
-        if ~isfolder([pcmDir, '/searchlight'])
-            mkdir([pcmDir, '/searchlight'])
-        end
-        
-        radius=16;
-        numVox=160;
-        
-        for r = 1:length(subcortStructs)
-            
-            V=spm_vol(['mr' subj_name{s} '_' subcortStructs{r} '.nii']); %if preceded by case MVA_mask
-            
-            [LI,voxmin,voxmax,n]=lmva_voxelselection(R{r,1}.data', R{r,1}.data', [radius numVox], V.mat, V.dim);
-            save ([pcmDir, '/searchlight/' subj_name{s} '_' subcortStructs{r} '_' 'volsearch160.mat'], 'vox', 'LI', 'voxmin', 'voxmax', 'n')
-            
-            cd(fullfile(subcorticalPCMDir, subj_name{s}));
-            V=spm_vol(['mr' subj_name{s} '_' subcortStructs{r} '.nii']); %if preceded by case MVA_mask
-            X=spm_read_vols(V);
-            [i,j,k]=ind2sub(size(X),find(X~=0));
-            vox=[i j k];
-            %             [LI,voxmin,voxmax,n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvox.nii');
-        end
-        
-        
-    case 'pcm_sub_fitModels_PrepSearchlight'
-        
-        s=varargin{1};
-        
-        %%%Model Generation
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        timingModel.G = pcm_estGCrossval(models.temp.data,run,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,run,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,run,c);
-        
-        % Model 1: Order model, derived from simulations with
-        % high order decoding
-        M{1}.type       = 'component';
-        M{1}.numGparams = 1;
-        M{1}.Gc         = orderModel.G;
-        M{1}.name       = 'O';
-        
-        % Model 2: Timing model, derived from simulations with
-        % high timing decoding
-        M{2}.type       = 'component';
-        M{2}.numGparams = 1;
-        M{2}.Gc         = timingModel.G;
-        M{2}.name       = 'T';
-        
-        % Model 3: Integrated model, derived from simulations with
-        % high integrated decoding
-        M{3}.type       = 'component';
-        M{3}.numGparams = 1;
-        M{3}.Gc         = integratedModel.G;
-        M{3}.name       = 'I';
-        
-        %generate combination models
-        M = pcm_constructModelFamily(M);
-        
-        % Model end: Free model as Noise ceiling
-        % M{end+1}.type       = 'freechol';
-        M{end+1}.type     = 'freedirect';
-        M{end}.numCond    = 4;
-        M{end}.name       = 'noiseceiling';
-        M{end}            = pcm_prepFreeModel(M{end});
-        
-        for r=1:length(subcortStructs);
-            
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end
-            
-            out = {fullfile(pcmDir, 'data', 'subcortical', subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_PCMLikelihood.nii'])};
-            runEffect  = 'fixed';
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@pcm_searchlight,'params',{M,run,c});
-            telapsed = toc(tstart)
-        end
-        
-        
-        
-        % Fit the models on the group level
-        [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-        
-        % Fit the models through cross-subject crossvalidation
-        [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-        
-        lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-        
-        
-        
-        
-    case 'pcm_cb_make_nii' %%% Cerebellar PCM Analysis %%% Convert input from volbrain into asegCB .nii file, saved in anatomicalDir
-        
-        %Run CERES segmentation (https://www.volbrain.upv.es/) on zipped T1 scans first.
-        %Then download all folders in *native space* to the cerebellum directory.
-        %Ref: Manjon & Coupe, 2016: volBrain: An Online MRI Brain Volumetry System
-        
-        cd([cerebellumDir '/raw']) %cd to CB directory and get all foldernames
-        folderName = dir('native_*');
-        for i=1:length(folderName)
-            filename = dir([folderName(i).name '/native_lab*']);
-            anaSubjName = regexp(folderName(i).name,'((?<=native_).*(?=_anatomical))','match'); %extract 's0x' from foldername
-            
-            if ~isfolder([cerebellumDir '/' anaSubjName{1}])
-                mkdir([cerebellumDir '/' anaSubjName{1}])
-            end
-            
-            copyfile([folderName(i).name '/' filename(1).name], [cerebellumDir '/' anaSubjName{1} '/' anaSubjName{1} '_asegCB.nii']) %move and rename file
-        end
-        
-    case 'pcm_cb_make_structs' %extracts each subcortical structure from aseg file, and creates respective nii files
-        
-        sn = varargin{1};
-        
-        cbRegionValues = [1:13, 101:113]; %left 1:13, right 101:113 (from READMEnat.pdf files)
-        
-        for i=1:length(allcbRegions)
-            
-            cd([cerebellumDir, '/', subj_name{sn}])
-            
-            matlabbatch{1}.spm.util.imcalc.input = {[cerebellumDir, '/' subj_name{sn} '/' subj_name{sn}, '_asegCB.nii,1']};
-            matlabbatch{1}.spm.util.imcalc.output = [subj_name{sn}, '_', allcbRegions{i}];
-            matlabbatch{1}.spm.util.imcalc.expression = ['i1 == ', num2str(cbRegionValues(i))];
-            matlabbatch{1}.spm.util.imcalc.var = struct('name', {}, 'value', {});
-            matlabbatch{1}.spm.util.imcalc.options.dmtx = 0;
-            matlabbatch{1}.spm.util.imcalc.options.mask = 0;
-            matlabbatch{1}.spm.util.imcalc.options.interp = 1;
-            matlabbatch{1}.spm.util.imcalc.options.dtype = 4;
-            
-            spm_jobman('run',matlabbatch);
-        end
-        
-    case 'pcm_cb_reslice'
-        
-        sn = varargin{1};
-        
-        refImageDir = [glmDir, '/', subj_name{sn}]; %directories for functional reference image (beta 1)
-        cerebellumImageDir = [cerebellumDir, '/', subj_name{sn}]; %and for cerebellar images
-        
-        for r=1:length(allcbRegions) %loop through cerebellar regions and reslice them to beta image resolution
-            
-            matlabbatch{1}.spm.spatial.realign.write.data = {[refImageDir, '/beta_0001.nii']; [cerebellumImageDir, '/', subj_name{sn}, '_', allcbRegions{r}, '.nii']};
-            matlabbatch{1}.spm.spatial.realign.write.roptions.which = [2 1];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.interp = 4;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.wrap = [0 0 0];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.mask = 1;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.prefix = 'r';
-            
-            spm_jobman('run',matlabbatch);
-            disp([allcbRegions{r} ' resliced'])
-        end
-        
-    case 'pcm_cb_make_mask'  %SUBCORTICAL SEARCHLIGHT ANALYSIS - Makes restricted analysis mask for MVA
-        
-        s=varargin{1};
-        
-        for i=1:length(allcbRegions);
-            funMask=fullfile(glmDir, subj_name{s},'maskbrain.nii');
-            omask=fullfile(cerebellumDir, subj_name{s},['mr' subj_name{s} '_' allcbRegions{i} '.nii']); %output mask to be used in the future
-            subcort = fullfile(cerebellumDir, subj_name{s},['r' subj_name{s} '_' allcbRegions{i} '.nii']);
-            
-            spm_imcalc({funMask,subcort},omask,'i1 >0.01 & i2 > 0.1',{}); %recorded activity in brain (grey + white matter)
-        end
-        
-    case 'pcm_cb_makeROIs' %CB ANALYSIS - uses region toolbox to define R struct for analysis
-        
-        s=varargin{1};
-        R=cell(length(cbRegions), 1);
-        cd(fullfile(cerebellumDir, subj_name{s}))
-        
-        for i=1:length(cbRegions)%for each subcort region
-            R{i} = region('roi_image',[subj_name{s} '_' cbRegions{i} '.nii'],1,cbRegions{i}); %'mr'
-            R{i}.name = [subj_name{s} '_' cbRegions{i}]; %use toolbox to define, then add name
-        end%for each subcort region
-        
-        R = region_calcregions(R, 'voxelspace', fullfile(glmDir, subj_name{s}, 'beta_0001.nii'));
-        
-        out = [roiCbDir '/' subj_name{s} '_cerebellum_roi'];
-        save(strjoin(out,''), 'R'); %save as participant file which holds all regions
-        
-    case 'pcm_cb_preWhiten' %pre-whiten data from cerebellar ROIs ready for PCM
-        
-        %T = []; %cannot save all together due to memory restrictions %
-        s=varargin{1}; blueBear = varargin{2};
-        
-        for sn=s
-            fprintf('%d.',sn); fprintf('\n')
-            load([glmDir, '/', subj_name{sn}, '/', 'SPM.mat'], 'SPM')
-            load([roiCbDir, '/', subj_name{sn}, '_cerebellum_roi.mat'], 'R')
+            load([glmDir, '/', subj_name{s}, '/', 'SPM.mat'],            'SPM')
+            load([roiSubDir, '/', subj_name{s}, '_subcortical_roi.mat'], 'R')
+            cd(fullfile(subcorticalDir, subj_name{s}))
             
             V = SPM.xY.VY;
             
@@ -5276,454 +3089,6 @@ switch(what)
             else
             end
             
-            S=[];
-            
-            for r=1:length(R)
-                P=[];
-                Y = region_getdata(V,R{r});
-                
-                [betaW,resMS,~,beta] = rsa.spm.noiseNormalizeBeta(Y,SPM);
-                
-                P.betaW = {betaW};
-                P.betaUW = {bsxfun(@rdivide,beta,sqrt(resMS))};
-                P.betaRAW = {beta};
-                P.resMS = {resMS};
-                P.SN = sn;
-                P.region = r;
-                
-%                 T = addstruct(T,S); %cannot save all together due to memory restrictions
-                S = addstruct(S, P);
-                fprintf('%d.',r)
-            end
-            fprintf('\n');
-            
-            save(fullfile(roiCbDir, [subj_name{sn} '_preWhitened_betas.mat']),'-struct','S');
-        end
-        
-%         save(fullfile(roiCbDir, 'preWhitened_betas.mat'),'-struct','T');  %cannot save all together due to memory restrictions
-        
-    case 'pcm_cb_concatData'
-        
-        cd(roiCbDir)
-        T=[];
-%         betaRAW={}; betaUW = {}; betaW = {}; region = {}; resMS = {}; SN = {};
-        for i=anaSubj
-            S = load([subj_name{i}, '_preWhitened_betas.mat']);
-%             betaRAW= [betaRAW; S.betaRAW{1}];
-%             betaUW = [betaUW;  S.betaUW{1}];
-%             betaW  = [betaW;   S.betaW{1}];
-%             region = [region; S.region];
-%             resMS  = [resMS; S.resMS{1}];
-%             SN     = [SN; S.SN];
-            T = addstruct(T, S);
-        end
-        
-%         save('preWhitened_betas.mat', 'betaRAW', 'betaUW', 'betaW', 'region', 'resMS', 'SN')
-        save('preWhitened_betas.mat', 'T', '-v7.3')
-        
-    case 'pcm_cb_fitModels_Prep' %PCM during prep phase only (4 conditions)
-        
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        
-        %load subcortical data for analysis
-        W = load(fullfile(roiCbDir, 'preWhitened_betas.mat'));
-        W = W.T;
-        
-        %define condition variables
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,length(run)) runBSL];
-        
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(cbRegions)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
-            end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
-            end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %             M{end+1}.type       = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Preparation in ' cbRegions{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*1; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/cerebellum/' cbRegions{r} '_prepPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
-        end
-        
-    case 'pcm_cb_fitModels_Prod' %PCM during prep phase only (4 conditions)
-        
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        
-        %load subcortical data for analysis
-        W = load(fullfile(roiCbDir, 'preWhitened_betas.mat'));
-        W = W.T;
-        
-        %define condition variables
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,length(run)) runBSL];
-        
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-        
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(cbRegions)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
-            end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
-            end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            %             C= pcm_indicatorMatrix('allpairs',[1:4]');
-            %             [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            %             subplot(2,4,2);
-            %             plot(COORD(:,1),COORD(:,2),'o');
-            %             axis equal;
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %             M{end+1}.type       = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Production in ' cbRegions{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*2; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/cerebellum/' cbRegions{r} '_prodPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
-        end
-        
-    case 'pcm_cb_plotGroup'
-        
-        phase = {'Preparation', 'Production'};
-        %         pcmDataDir = [pcmDir '/data/freedirect']; %PCM data directory
-        pcmDataDir = [pcmDir '/data/cb']; %PCM data directory
-        %                 pcmDataDir = [pcmDir '/data_preFuncMask/data/freedirect']; %PCM data directory
-        %load prep and prod for all regions
-        cd(pcmDataDir)
-        files = dir('*.mat');
-        for i=1:length(files) %load data from ROIs into struct
-            Y = load(files(i).name);
-            R(i) = Y;
-        end
-        
-        cbRegions = regexprep(cbRegions, '_',' '); %change underscores to spaces in title names
-        
-        figure
-        for i=1:length(R)/2
-            subplot(4,2,i)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' cbRegions{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=9:length(R)
-            subplot(4,2,i-8)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' cbRegions{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=1:length(R)/2
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(4,2,i);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' cbRegions{unique(R(i).T.region)}])
-        end
-        
-        figure
-        for i=9:length(R)
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(4,2,i-8);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' cbRegions{unique(R(i).T.region)}])
-        end
-        
-    case 'pcm_cb_normalise' %normalisation into suit space - requires suit analysis to be run (see SUIT section above)
-        
-        sn=varargin{1};
-        cd([baseDir '/imaging/suit/']);
-        
-        disp(['suit_reslicing ' subj_name{sn}])
-        
-        inDir = [suitDir '/' subj_name{sn} '/']; %path to where data is stored (to be normalised)
-        outDir = cerebellumDir;
-        filenames = {'maskbrainSUIT'};
-        
-        % prepare files for input
-        affine = {[anatDir '/' subj_name{sn} '/' 'Affine_' subj_name{sn} '_anatomical_seg1.mat']};
-        flowfield = {[anatDir '/' subj_name{sn} '/' 'u_a_' subj_name{sn} '_anatomical_seg1.nii']};
-        
-        dataFiles = cell(length(filenames),1); %loop to put all full input file directories into a cell
-        for i=1:length(filenames)
-            dataFiles{i} = [inDir, filenames{i}, '.nii'];
-        end
-        
-        mask = {[anatDir '/' subj_name{sn} '/' 'c_' subj_name{sn} '_anatomical_pcereb.nii']};
-        
-        outFiles = cell(length(filenames),1);
-        for i=1:length(filenames)
-            outFiles{i} = [outDir, '/', filenames{i}, '_', subj_name{sn}, '.nii'];
-        end
-        
-        % prepare struct for function
-        job.subj.affineTr = affine; %fill job.subj. struct with respective items
-        job.subj.flowfield = flowfield;
-        job.subj.resample = dataFiles;
-        job.subj.mask = mask;
-        job.subj.outname = outFiles;
-        
-        %function
-        suit_reslice_dartel(job)
-        
-    case 'pcm_cb_searchlight'
-        
-        
-        
-    case 'pcm_cortical_makeROIs'
-        
-        s=varargin{1};
-        
-        %sphere
-        mni=[...
-            -36 -22 53; -21 -12 60; -8 12 57; -32 -54 56; ... %LM1, LPMd, LSMA, LSPC
-             36 -22 53;  21 -12 60;  8 18 49;  30 -59 46]; %RM1, RPMd, RSMA, RSPC
-        radius = 6; %adjust as necessary
-        
-        R=cell(length(corticalRegions), 1);
-        
-        for i=1:length(corticalRegions)%for each subcort region
-            R{i} = region('sphere', mni(i,:), radius);
-            R{i}.name = [subj_name{s} '_' corticalRegions{i}]; %use toolbox to define, then add name
-        end%for each subcort region
-        
-        R = region_calcregions(R, 'voxelspace', fullfile(glmDir, subj_name{s}, 'beta_0001.nii'));
-        
-        out = [roiCorticalDir '/' subj_name{s} '_cortical_roi'];
-        save(strjoin(out,''), 'R'); %save as participant file which holds all regions
-        
-    case 'pcm_cortical_preWhiten' %pre-whiten data from subcortical ROIs ready for PCM
-        
-        T = []; %s=varargin{1};
-        
-        for s=anaSubj
-            fprintf('%d.',s); fprintf('/n')
-            load([glmDir, '/', subj_name{s}, '/', 'SPM.mat'])
-            load([roiCorticalDir, '/', subj_name{s}, '_cortical_roi.mat'])
-            
-            V = SPM.xY.VY;
             for r=1:length(R)
                 Y = region_getdata(V,R{r});
                 
@@ -5739,1217 +3104,1212 @@ switch(what)
                 T = addstruct(T,S);
                 fprintf('%d.',r)
             end
-            fprintf('/n');
+            fprintf('\n');
         end
         
-        save(fullfile(roiCorticalDir, 'preWhitened_betas.mat'),'-struct','T');
+        save(fullfile(roiSubDir, 'preWhitened_betas.mat'),'-struct','T');
+    case 'subcortical_calculateRDMs'
         
-    case 'pcm_cortical_fitModels_Prep' %PCM during prep phase only (4 conditions)
+        cd(roiSubDir)
+        R = load('preWhitened_betas.mat');
+        nrruns = length(run); nCond = 8;
+        saveDir = fullfile(rsaDir, 'subcortical');
         
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
-        end
-        clear('D')
-        
-        %load subcortical data for analysis
-        W = load(fullfile(roiCorticalDir, 'preWhitened_betas.mat'));
-        
-        %define condition variables
+        %%% prepare condition and partition (run) vectors
         runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,length(run)) runBSL];
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
         
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
         
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(corticalRegions)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        partVec = double(condVec > 0); %assign run number to beta
+        for i=1:nCond %assign run numbers to conds, ignore no-interest betas
+            partIdx = find(condVec == i);
+            for j=1:length(run)
+                partVec(partIdx(j)) = j;
             end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
-            end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %M{end+1}.type     = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Preparation in ' corticalRegions{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*1; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/cortical/' corticalRegions{r} '_prepPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
         end
         
-    case 'pcm_cortical_fitModels_Prod' %PCM during prep phase only (4 conditions)
+        %%% loop through prewhitened data, calculate crossnobis dissimilarities
+        %pre-allocate output variables
+        R.d   = NaN(length(R.SN), nCond * (nCond - 1) / 2); %pairwise distance measures
+        R.Sig = cell(length(R.SN), 1); %covariance matrix of the beta estimates across different imaging runs.
+        R.G   = cell(length(R.SN), 1); %second moment matrix
+        R.matrix = cell(length(R.SN), 1); % Pairwise contrast matrix
         
-        modelDir = [modelDir '/onePhase']; %we want models with one phase only
-        
-        %load representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
+        for s = anaSubj
+            load(fullfile(glmDir, subj_name{s}, 'SPM'), 'SPM') %load SPM design matrix for distance function
+            for r = unique(R.region)'
+                B = R.betaW{R.region == r & R.SN == s};
+                
+                [d, Sig] = rsa.distanceLDC(B, partVec, condVec, SPM.xX.X);
+                [G,~]    = pcm_estGCrossval(B,partVec,condVec, 'X', SPM.xX.X);
+                matrix   = indicatorMatrix('allpairs',1:nCond); % Pairwise contrast matrix
+                
+                R.d     (R.region == r & R.SN == s, :) = d;
+                R.Sig   {R.region == r & R.SN == s}    = Sig;
+                R.G     {R.region == r & R.SN == s}    = G;
+                R.matrix{R.region == r & R.SN == s}    = matrix;
+            end
         end
-        clear('D')
         
-        %load subcortical data for analysis
-        W = load(fullfile(roiCorticalDir, 'preWhitened_betas.mat'));
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        orderDiff      = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0];   %pairwise contrast index (1s are where orders are different)
+        timingDiff     = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1];   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0];   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1];   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0];   %^ index (1s are contrasts across phases)
         
-        %define condition variables
+        for i=1:length(R.d)
+            
+            R.dOrderPrep(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prepCols == 1);
+            R.dOrderProd(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prodCols == 1);
+            R.dOrderCross(i,:) = R.d(i, orderDiff == 1 & timingDiff == 0 & crossPhaseCols == 1);
+            R.dOrderAll(i,:)   = R.d(i, orderDiff == 1 & timingDiff == 0);
+            
+            R.dTimingPrep(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prepCols == 1);
+            R.dTimingProd(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prodCols == 1);
+            R.dTimingCross(i,:) = R.d(i, timingDiff == 1 & orderDiff == 0 & crossPhaseCols == 1);
+            R.dTimingAll(i,:)   = R.d(i, timingDiff == 1 & orderDiff == 0);
+            
+            R.dOverallPrep(i,:)  = R.d(i, prepCols == 1);
+            R.dOverallProd(i,:)  = R.d(i, prodCols == 1);
+            R.dOverallCross(i,:) = R.d(i, crossPhaseCols == 1);
+        end
+        
+        if ~isfolder(saveDir)
+            mkdir(saveDir)
+        end
+        
+        save(fullfile(saveDir, 'subRoiDistances.mat'), 'R')
+    case 'subcortical_calculateRDMs_integrated'
+        %subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY)
+        
+        cd(roiSubDir)
+        R = load('preWhitened_betas.mat');
+        nrruns = length(run); nCond = 8;
+        saveDir = fullfile(rsaDir, 'subcortical');
+        
+        %%% prepare condition and partition (run) vectors
         runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,length(run)) runBSL];
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
         
-        c=repmat(1:4,1,length(run))'; % extract conditions (leave out errors!)
-        runc=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
         
-        timingModel.G = pcm_estGCrossval(models.temp.data,runc,c);
-        orderModel.G = pcm_estGCrossval(models.ord.data,runc,c);
-        integratedModel.G = pcm_estGCrossval(models.int.data,runc,c);
-        
-        [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-        
-        for r=1:length(corticalRegions)
-            
-            loopCounter = 1;
-            for i=anaSubj
-                %YTemp = W.betaUW{W.SN == i & W.region == r}; %univariate prewhiten
-                YTemp = W.betaW{W.SN == i & W.region == r}; %multivariate prewhiten
-                Y{:,loopCounter} = YTemp(col, :);
-                loopCounter = loopCounter + 1;
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        partVec = double(condVec > 0); %assign run number to beta
+        for i=1:nCond %assign run numbers to conds, ignore no-interest betas
+            partIdx = find(condVec == i);
+            for j=1:length(run)
+                partVec(partIdx(j)) = j;
             end
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},runc,c);
+        end
+        
+        %%% loop through prewhitened data, calculate crossnobis dissimilarities
+        %pre-allocate output variables
+        R.d   = NaN(length(R.SN), nCond * (nCond - 1) / 2); %pairwise distance measures
+        R.Sig = cell(length(R.SN), 1); %covariance matrix of the beta estimates across different imaging runs.
+        R.G   = cell(length(R.SN), 1); %second moment matrix
+        R.matrix = cell(length(R.SN), 1); % Pairwise contrast matrix
+        
+        for s = anaSubj
+            load(fullfile(glmDir, subj_name{s}, 'SPM'), 'SPM') %load SPM design matrix for distance function
+            for r = unique(R.region)'
+                B = R.betaW{R.region == r & R.SN == s};
+                
+                [d, Sig] = rsa.distanceLDC_cor4main_RY(B, partVec, condVec, SPM.xX.X); %integrated function
+                [G,~]    = pcm_estGCrossval(B,partVec,condVec, 'X', SPM.xX.X);
+                matrix   = indicatorMatrix('allpairs',1:nCond); % Pairwise contrast matrix
+                
+                R.d     (R.region == r & R.SN == s, :) = d;
+                R.Sig   {R.region == r & R.SN == s}    = Sig;
+                R.G     {R.region == r & R.SN == s}    = G;
+                R.matrix{R.region == r & R.SN == s}    = matrix;
             end
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            %             C= pcm_indicatorMatrix('allpairs',[1:4]');
-            %             [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            %             subplot(2,4,2);
-            %             plot(COORD(:,1),COORD(:,2),'o');
-            %             axis equal;
-            
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,~]=pcm_classicalMDS(Gm);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = zeros(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models
-            M = pcm_constructModelFamily(M);
-            
-            % Model end: Free model as Noise ceiling
-            %M{end+1}.type       = 'freechol';
-            M{end+1}.type     = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,runc,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,runc,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Production in ' corticalRegions{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*2; %1 = prep, 2 = prod
-            
-            save([pcmDir '/data/cortical/' corticalRegions{r} '_prodPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            clear('M')
         end
         
-    case 'pcm_cortical_plotGroup'
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        orderDiff      = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0];   %pairwise contrast index (1s are where orders are different)
+        timingDiff     = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1];   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0];   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1];   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0];   %^ index (1s are contrasts across phases)
         
-        phase = {'Preparation', 'Production'};
-        pcmDataDir = [pcmDir '/data/cortical']; %PCM data directory
-        
-        %load prep and prod for all regions
-        cd(pcmDataDir)
-        files = dir('*.mat');
-        for i=1:length(files) %load data from ROIs into struct
-            Y = load(files(i).name);
-            R(i) = Y;
+        for i=1:length(R.d)
+            
+            R.dOrderPrepInt(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prepCols == 1);
+            R.dOrderProdInt(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prodCols == 1);
+            R.dOrderCrossInt(i,:) = R.d(i, orderDiff == 1 & timingDiff == 0 & crossPhaseCols == 1);
+            R.dOrderAllInt(i,:)   = R.d(i, orderDiff == 1 & timingDiff == 0);
+            
+            R.dTimingPrepInt(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prepCols == 1);
+            R.dTimingProdInt(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prodCols == 1);
+            R.dTimingCrossInt(i,:) = R.d(i, timingDiff == 1 & orderDiff == 0 & crossPhaseCols == 1);
+            R.dTimingAllInt(i,:)   = R.d(i, timingDiff == 1 & orderDiff == 0);
+            
+            R.dIntegratedPrep(i,:)  = R.d(i, prepCols == 1);
+            R.dIntegratedProd(i,:)  = R.d(i, prodCols == 1);
+            R.dIntegratedCross(i,:) = R.d(i, crossPhaseCols == 1);
         end
         
-        figure
-        for i=1:length(R)/2
-            subplot(4,2,i)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' corticalRegions{unique(R(i).T.region)}])
+        if ~isfolder(saveDir)
+            mkdir(saveDir)
         end
         
-        figure
-        for i=9:length(R)
-            subplot(4,2,i-8)
-            pcm_plotModelLikelihood_RY(R(i).Tcross,R(i).M,'upperceil',R(i).Tgroup.likelihood(:,length(R(i).M)));
-            title([phase{unique(R(i).T.phase)} ' in ' corticalRegions{unique(R(i).T.region)}])
+        save(fullfile(saveDir, 'subRoiDistances_integrated.mat'), 'R')
+    case 'subcortical_plotRDMs'
+        subcortStructs = subcortStructs(2,:);%names from second row
+        subcortStructs = strrep(subcortStructs, '_', ' '); %replace _ with space
+        concatFile = fullfile(rsaDir, 'subcortical', 'subRoiDistancesAll.mat'); %file with all region distances
+        
+        if ~exist(concatFile, 'file')
+            load(fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat'), 'R');
+            Rovr = R;
+            load(fullfile(rsaDir, 'subcortical', 'subRoiDistances_integrated.mat'), 'R');
+            Rint = R;
+            
+            conds = {...
+                'dOverallPrep',    'dOverallProd',    'dOverallCross', ...%variable name
+                'dOrderPrep',      'dOrderProd',      'dOrderCross', ...
+                'dTimingPrep',     'dTimingProd',     'dTimingCross';...
+                1,                 1,                 1, ...%overall/order/timing - cond
+                2,                 2,                 2, ...
+                3,                 3,                 3; ...
+                1,                 2,                 3, ...%prep/prod/cross - phase
+                1,                 2,                 3, ...
+                1,                 2,                 3, ...
+                };
+            condsInt = {...
+                'dIntegratedPrep', 'dIntegratedProd', 'dIntegratedCross';...
+                4,                 4,                 4; ...%integrated - cond
+                1,                 2,                 3, ...%prep/prod/cross - phase
+                };
+            nConds = length(conds);
+            nCondsInt = length(condsInt);
+            
+            A = [];
+            
+            for i=1:nConds%for factorial conds
+                Atemp.SN     = Rovr.SN;
+                Atemp.region = Rovr.region;
+                Atemp.dist   = mean(Rovr.(conds{1, i}), 2);%mean of relevant pairwise distances
+                Atemp.cond   = ones(length(Atemp.dist), 1) * conds{2, i};
+                Atemp.phase  = ones(length(Atemp.dist), 1) * conds{3, i};
+                
+                A = addstruct(A, Atemp);
+                clear Atemp
+            end%for factorial conds
+            for i=1:nCondsInt%for int conds
+                Atemp.SN     = Rint.SN;
+                Atemp.region = Rint.region;
+                Atemp.dist   = mean(Rint.(condsInt{1, i}), 2);%mean of relevant pairwise distances
+                Atemp.cond   = ones(length(Atemp.dist), 1) * condsInt{2, i};
+                Atemp.phase  = ones(length(Atemp.dist), 1) * condsInt{3, i};
+                
+                A = addstruct(A, Atemp);
+                clear Atemp
+            end%for int conds
+            
+            save(fullfile(rsaDir, 'subcortical', 'subRoiDistancesAll.mat'), 'A');
+        else
+            load(concatFile, 'A')%if it exists, load it
         end
         
-        figure
-        for i=1:length(R)/2
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(4,2,i);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' corticalRegions{unique(R(i).T.region)}])
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(A,{'SN', 'region', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'});
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        regions = repmat({'l thal', 'l caud', 'l put', 'l pal', 'l hip', 'r thal', 'r caud', 'r put', 'r pal', 'r hip'}, 1, 12);
+        barplot([T.phase, T.cond, T.region], T.dist, 'split', T.cond, 'facecolor', colour)
+        ylim([-0.0017 0.022])
+        set(gca,'xticklabel',regions)
+        ylabel('Crossnobis dissimilarity')
+        title('Overview')
+        %-------------------------------------------------------------------------------%
+        
+        for i=1:length(subcortStructs)
+            figure %%% Region plots for prep/prod order/timing/integrated
+            T = tapply(A,{'SN', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', A.region == i & A.cond > 1 & A.phase < 3);
+            colour={[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+            lineplot([T.phase], T.dist, 'split', T.cond, ...
+                'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
+                'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour)
+            ylim([-0.0018 0.0055])
+            drawline(0, 'dir', 'horz', 'linestyle', '- -')
+            ylabel('Crossnobis dissimilarity')
+            set(gca,'xticklabel',{'Prep', 'Prod'})
+            title(subcortStructs{i})
         end
+        %-------------------------------------------------------------------------------%
         
-        figure
-        for i=9:length(R)
-            labels = {'O1T1', 'O1T2', 'O2T1', 'O2T2'};
-            C= pcm_indicatorMatrix('allpairs',(1:4)');
-            [COORD,l]=pcm_classicalMDS(R(i).Gm);
-            subplot(4,2,i-8);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            % axis equal;
-            title([phase{unique(R(i).T.phase)} ' in ' corticalRegions{unique(R(i).T.region)}])
-        end
-        
+        figure %%% Investigate cross-phase distances
+        T = tapply(A,{'SN', 'region', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', A.cond == 1 & A.phase == 3);
+        %colour={[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        regions = repmat({'l thal', 'l caud', 'l put', 'l pal', 'l hip', 'r thal', 'r caud', 'r put', 'r pal', 'r hip'}, 1, 12);
+        barplot([T.phase, T.cond, T.region], T.dist, 'split', T.cond) %'facecolor', colour)
+        ylim([0 0.022])
+        set(gca,'xticklabel',regions)
+        ylabel('Crossnobis dissimilarity')
+        title('Cross-phase')
         
         
-        
-    case 'PCM_normaliseBetaMaps' %%% Cortical PCM Analysis %%% normalises individual beta maps for cortical marsbar ROI analysis
-        
-        s = varargin{1};
-        
-        if ~isfolder(pcmGroupDir)
-            mkdir(pcmGroupDir) % folder for pcm group dir
-        end
-        
-        load([glmDir, '/', subj_name{s}, '/', 'SPM.mat'],'SPM')
-        
-        nrruns=length(SPM.nscan);
-        
-        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-        prep=[repmat(prep,1,nrruns) runBSL];
-        
-        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-        prod=[repmat(prod,1,nrruns) runBSL];
-        
-        [~,prepCol] = find(prep>0); prepCol = reshape(prepCol,4,[]);
-        [~,prodCol] = find(prod>0); prodCol = reshape(prodCol,4,[]);
-        col = [prepCol; prodCol]; col = reshape(col,1,[]);
-        
-        P={SPM.Vbeta(1:126).fname}';
-        P = P(col);
-        %MVPA accuracy maps
-        images= P; % the above loads all regressors for prep and prod
-        images = strrep(images,'.nii','');%remove .nii from filename
-        defor= fullfile(anatDir, subj_name{s}, [subj_name{s}, '_anatomical_seg_sn.mat']);
-        
-        sn_images = strcat([glmDir, '/', subj_name{s}, '/'], images, '.nii');
-        out_images = strcat([pcmGroupDir, '/'], images, ['_', subj_name{s}, '.nii']);
-        spmj_normalization_write(defor, sn_images,'outimages',out_images); %Trilinear interpolation
-        
-    case 'PCM_cortical_ROItoNii' %Generates elife ROIs with marsbar and converts to .nii
-        
-        %%% from Elife 2014 bilateral:
-        %         roiOUT=[baseDir, '/imaging/ROI/roi_Elife2014.mat'];
-        
-        refImageDir = [groupDir '/PCM']; %directories for functional reference image (beta 1)
-        cortROIDir = [baseDir, '/imaging/ROI/']; %and for cortical ROIs
-        cd(cortROIDir)
-        
-        mni=[-36 -22 53 ; 36 -22 53 ; -21 -12 60  ; 21 -12 60; -8 12 57;  8 18 49; -32 -54 56; 30 -59 46]; %peaks of overall classifier in elife
-        roiName={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        
-        for i=1:length(roiName)
-            
-            sphereROI = maroi_sphere(struct('centre',mni(i,:),'radius',9,'label',roiName{i})); %constructs ROIs in marsbar format
-            
-            %%% Then save:
-            saveroi(sphereROI, [roiName{i}, '_elife.mat']); %as .mat
-            save_as_image(sphereROI, [roiName{i} '_elife.nii']) %as .nii too
-            
-            %then reslice into functional resolution:
-            matlabbatch{1}.spm.spatial.realign.write.data = {[refImageDir, '/beta_0001_s03.nii']; [roiName{i}, '_elife.nii']};
-            matlabbatch{1}.spm.spatial.realign.write.roptions.which = [2 1];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.interp = 4;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.wrap = [0 0 0];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.mask = 1;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.prefix = 'r';
-            
-            spm_jobman('run',matlabbatch);
-            disp([roiName{i} ' resliced'])
-            
-        end%for rois
-        
-    case 'PCM_cortical_define_mva_area' %converts RoI from marsbar .nii to voxel coordinate .mat for PCM
-        
-        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        cd(roiDir);
-        
-        % load respective subcortical .nii and extract x y z coordinates for voxels
-        for r=1:length(rois)
-            V=spm_vol(['r' rois{r} '_elife.nii']);
-            X=spm_read_vols(V);
-            [i,j,k]=ind2sub(size(X),find(X~=0));
-            vox=[i j k];
-            
-            LI{1} = sub2ind(V.dim,vox(:,1),vox(:,2),vox(:,3)); %convert x y z coordinates into linear index for voxels
-            voxmin = min(vox,[],1); %min x y z coordinates for each voxel
-            voxmax = max(vox,[],1); %max as above
-            n = size(vox,1); %number of voxels
-            
-            save([pcmDir '/decodeArea_' rois{r} '.mat'], 'vox', 'LI', 'voxmin', 'voxmax', 'n')
-            disp([rois{r} ' done'])
-        end
-        
-    case 'PCM_cortical_fitModels_ROI' %fits PCM models to data from marsbar-defined ROIs
-        
-        %         anaSubj = [3,5,6,7,9,10,13,16,17,18,20,21,22,25,26,31,32,34,36,38,39,40,41,42];
-        
-        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        models = prepProdSimu_loadModels(modelDir);
-        
-        for r=1:length(rois)%for each roi
-            
-            %load subcortical data for analysis
-            loopCounter = 1;
-            for s=anaSubj
-                %         for s=3
-                
-                cd(fullfile(glmDir, subj_name{s})); %load SPM data
-                load SPM;
-                nrruns=length(SPM.nscan);
-                
-                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-                prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-                prep=[repmat(prep,1,nrruns) runBSL];
-                
-                prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-                prod=[repmat(prod,1,nrruns) runBSL];
-                
-                c=repmat(1:8,1,nrruns)'; % extract conditions (leave out errors!)
-                run=[1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-                
-                [~,prepCol] = find(prep>0); prepCol = reshape(prepCol,4,[]);
-                [~,prodCol] = find(prod>0); prodCol = reshape(prodCol,4,[]);
-                col = [prepCol; prodCol]; col = reshape(col,1,[]);
-                
-                
-                P={SPM.Vbeta(1:126).fname}';
-                Pselect=[];
-                for i=1:length(col)
-                    Pselect{i,1}= P{col(i)};
-                end
-                
-                S = load(fullfile(pcmDir,['/decodeArea_' rois{r} '.mat']));
-                
-                Pselect = strcat([groupDir, '/PCM/'], strrep(Pselect,'.nii',''), '_', subj_name{s}, '.nii');
-                Vin = spm_vol(char(Pselect));
-                
-                %extract voxels in decoding area from beta files and pass to MVPA function
-                linVox=unique(cat(2,S.LI{:})');
-                [I,J,K]=ind2sub(Vin(1).dim,linVox);
-                X = zeros(length(linVox),length(Vin));
-                
-                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-                end
-                
-                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-                nanidx = unique(nanidx);
-                X(nanidx,:) = [];
-                Y{:,loopCounter}=X';
-                
-                loopCounter = loopCounter+1;
-            end%subj loop
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
-            end;
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            [M, R] = prepProdSimu_prepModels(models,run,c);
-            
-            figure
-            subplot(3,7,[1, 8]);
-            H = eye(8)-ones(8)/8;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            C= pcm_indicatorMatrix('allpairs',[1:8]');
-            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            subplot(3,7,15);
-            plot(COORD(:,1),COORD(:,2),'o');
-            axis equal;
-            
-            % visualise models
-            subplot(3,7,2);
-            imagesc(R.orderPrepModel.G);
-            title('Order Prep')
-            
-            subplot(3,7,9);
-            imagesc(R.orderProdModel.G);
-            title('Order Prod')
-            
-            subplot(3,7,16);
-            imagesc(R.orderMaintModel.G);
-            title('Order Maint')
-            
-            subplot(3,7,3);
-            imagesc(R.timingPrepModel.G);
-            title('Timing Prep')
-            
-            subplot(3,7,10);
-            imagesc(R.timingProdModel.G);
-            title('Timing Prod')
-            
-            subplot(3,7,17);
-            imagesc(R.timingMaintModel.G);
-            title('Timing Maint')
-            
-            subplot(3,7,4);
-            imagesc(R.integratedPrepModel.G);
-            title('Integrated Prep')
-            
-            subplot(3,7,11);
-            imagesc(R.integratedProdModel.G);
-            title('Integrated Prod')
-            
-            subplot(3,7,18);
-            imagesc(R.integratedMaintModel.G);
-            title('Integrated Maint')
-            
-            % Treat the run effect as random or fixed?
-            % We are using a fixed run effect here, as we are not interested in the
-            % activity relative the the baseline (rest) - so as in RSA, we simply
-            % subtract out the mean patttern across all conditions.
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(3,7,[5 6 7 12 13 14 19 20 21]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(rois{r})
-        end
-        
-    case 'PCM_cortical_fitModelsPrep_ROI' %PCM during prep phase only in marsbar ROIs (4 conditions)
-        
-        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        modelDir = [modelDir '/onePhase'];
-        
-        %load 9 representational models
-        models = prepProdSimu_loadModels(modelDir);
-        
-        for r=1:length(rois)%for each roi
-            %load subcortical data for analysis
-            %         s=varargin{1};
-            loopCounter = 1;
-            for s=anaSubj
-                
-                cd(fullfile(glmDir, subj_name{s})); %load SPM data
-                load SPM;
-                nrruns=length(SPM.nscan);
-                
-                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-                prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-                prep=[repmat(prep,1,nrruns) runBSL];
-                
-                c=repmat(1:4,1,nrruns)'; % extract conditions (leave out errors!)
-                run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-                
-                [~,col] = find(prep>0); %identify relevant beta files and assign to pselect
-                P={SPM.Vbeta(1:126).fname}';
-                Pselect=[];
-                for i=1:length(col)
-                    Pselect{i,1}= P{col(i)};
-                end
-                
-                S = load(fullfile(pcmDir,['/decodeArea_' rois{r} '.mat']));
-                Vin = spm_vol(char(Pselect));
-                
-                %extract voxels in decoding area from beta files and pass to MVPA function
-                linVox=unique(cat(2,S.LI{:})');
-                [I,J,K]=ind2sub(Vin(1).dim,linVox);
-                X = zeros(length(linVox),length(Vin));
-                
-                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-                end
-                
-                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-                nanidx = unique(nanidx);
-                X(nanidx,:) = [];
-                Y{:,loopCounter}=X';
-                
-                loopCounter = loopCounter+1;
-            end%subj loop
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
-            end;
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            timingModel.G = pcm_estGCrossval(models.temp.data,run,c);
-            orderModel.G = pcm_estGCrossval(models.ord.data,run,c);
-            integratedModel.G = pcm_estGCrossval(models.int.data,run,c);
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            C= pcm_indicatorMatrix('allpairs',[1:4]');
-            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = ones(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models, but exclude null model
-            %             Mtemp = pcm_constructModelFamily(M(2:end));
-            %             M = [M(1) Mtemp];
-            M = pcm_constructModelFamily(M);
-            
-            %         % Model 5: Additive mixture between order and timing models
-            %         M{5}.type       = 'component';
-            %         M{5}.numGparams = 2;
-            %         M{5}.Gc(:,:,1)  = orderModel.G;
-            %         M{5}.Gc(:,:,2)  = timingModel.G;
-            %         M{5}.name       = 'order + timing';
-            
-            % Model end: Free model as Noise ceiling
-            %             M{end+1}.type       = 'freechol';
-            M{end+1}.type       = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            % Treat the run effect as random or fixed?
-            % We are using a fixed run effect here, as we are not interested in the
-            % activity relative the the baseline (rest) - so as in RSA, we simply
-            % subtract out the mean patttern across all conditions.
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Preparation in ' rois{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*1; %1 = prep, 2 = prod
-            
-            save([pcmDir '/cortical/' rois{r} '_prepPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            
-            clear('M')
-        end
-        
-    case 'PCM_cortical_fitModelsProd_ROI' %PCM during prod phase only in marsbar ROIs (4 conditions)
-        
-        rois={'LM1','RM1','LPMd','RPMd','LSMA','RSMA','LSPC','RSPC'}; %corresponding names
-        modelDir = [modelDir '/onePhase'];
-        
-        %load 9 representational models
-        models = prepProdSimu_loadModels(modelDir);
-        
-        for r=1:length(rois)%for each roi
-            %load subcortical data for analysis
-            %         s=varargin{1};
-            loopCounter = 1;
-            for s=anaSubj
-                
-                cd(fullfile(glmDir, subj_name{s})); %load SPM data
-                load SPM;
-                nrruns=length(SPM.nscan);
-                
-                runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-                prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-                prod=[repmat(prod,1,nrruns) runBSL];
-                
-                c=repmat(1:4,1,nrruns)'; % extract conditions (leave out errors!)
-                run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-                
-                [~,col] = find(prod>0); %identify relevant beta files and assign to pselect
-                P={SPM.Vbeta(1:126).fname}';
-                Pselect=[];
-                for i=1:length(col)
-                    Pselect{i,1}= P{col(i)};
-                end
-                
-                S = load(fullfile(pcmDir,['/decodeArea_' rois{r} '.mat']));
-                Vin = spm_vol(char(Pselect));
-                
-                %extract voxels in decoding area from beta files and pass to MVPA function
-                linVox=unique(cat(2,S.LI{:})');
-                [I,J,K]=ind2sub(Vin(1).dim,linVox);
-                X = zeros(length(linVox),length(Vin));
-                
-                for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                    X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
-                end
-                
-                [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-                nanidx = unique(nanidx);
-                X(nanidx,:) = [];
-                Y{:,loopCounter}=X';
-                
-                loopCounter = loopCounter+1;
-            end%subj loop
-            
-            for i=1:length(Y)
-                G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
-            end;
-            
-            Gm = mean(G_hat,3); % Mean estimate
-            
-            %             for i=1:length(Y)
-            %                 [ovr(:,:,i), int(:,:,i), ord(:,:,i), temp(:,:,i)] = prepProdSimu_classify(Y{i});
-            %             end
-            
-            %             for i=1:length(Y)
-            %                 [accuracy(i,:), accuracy(i+1,:), accuracy(i+2,:), accuracy(i+3,:)] = prepProdSimu_classify(Y{i});
-            %                 accID(i,:) = 1;
-            %                 accID(i+1,:) = 2;
-            %                 accID(i+2,:) = 3;
-            %                 accID(i+3,:) = 4;
-            %             end
-            
-            timingModel.G = pcm_estGCrossval(models.temp.data,run,c);
-            orderModel.G = pcm_estGCrossval(models.ord.data,run,c);
-            integratedModel.G = pcm_estGCrossval(models.int.data,run,c);
-            
-            figure
-            subplot(2,4,1);
-            H = eye(4)-ones(4)/4;
-            imagesc(H*Gm*H');
-            title('Empirical Data')
-            
-            C= pcm_indicatorMatrix('allpairs',[1:4]');
-            [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-            subplot(2,4,2);
-            plot(COORD(:,1),COORD(:,2),'o');
-            axis equal;
-            
-            % visualise models
-            subplot(2,4,5);
-            imagesc(orderModel.G);
-            title('Order control')
-            
-            subplot(2,4,6);
-            imagesc(timingModel.G);
-            title('Timing control')
-            
-            subplot(2,4,7);
-            imagesc(integratedModel.G);
-            title('Integrated control')
-            
-            % ----------------------------------------------------------------
-            % Now build the models
-            % Model 1: Null model for baseline: here we use a model which has all finger
-            % Patterns be independent - i.e. all finger pairs are equally far away from
-            % each other
-            %             M{1}.type       = 'component';
-            %             M{1}.numGparams = 1;
-            %             M{1}.Gc         = ones(4);
-            %             M{1}.name       = 'null';
-            
-            % Model 2: Order model, derived from simulations with
-            % high order decoding
-            M{1}.type       = 'component';
-            M{1}.numGparams = 1;
-            M{1}.Gc         = orderModel.G;
-            M{1}.name       = 'O';
-            
-            % Model 3: Timing model, derived from simulations with
-            % high timing decoding
-            M{2}.type       = 'component';
-            M{2}.numGparams = 1;
-            M{2}.Gc         = timingModel.G;
-            M{2}.name       = 'T';
-            
-            % Model 4: Integrated model, derived from simulations with
-            % high integrated decoding
-            M{3}.type       = 'component';
-            M{3}.numGparams = 1;
-            M{3}.Gc         = integratedModel.G;
-            M{3}.name       = 'I';
-            
-            %generate combination models, but exclude null model
-            %             Mtemp = pcm_constructModelFamily(M(2:end));
-            %             M = [M(1) Mtemp];
-            M = pcm_constructModelFamily(M);
-            
-            %         % Model 5: Additive mixture between order and timing models
-            %         M{5}.type       = 'component';
-            %         M{5}.numGparams = 2;
-            %         M{5}.Gc(:,:,1)  = orderModel.G;
-            %         M{5}.Gc(:,:,2)  = timingModel.G;
-            %         M{5}.name       = 'order + timing';
-            
-            % Model end: Free model as Noise ceiling
-            %             M{end+1}.type       = 'freechol';
-            M{end+1}.type       = 'freedirect';
-            M{end}.numCond    = 4;
-            M{end}.name       = 'noiseceiling';
-            M{end}            = pcm_prepFreeModel(M{end});
-            
-            % Treat the run effect as random or fixed?
-            % We are using a fixed run effect here, as we are not interested in the
-            % activity relative the the baseline (rest) - so as in RSA, we simply
-            % subtract out the mean patttern across all conditions.
-            runEffect  = 'fixed';
-            
-            % Fit the models on the group level
-            [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-            
-            % Fit the models through cross-subject crossvalidation
-            [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-            
-            % Provide a plot of the crossvalidated likelihoods
-            subplot(2,4,[4 8]);
-            T = pcm_plotModelLikelihood_RY(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-            title(['Production in ' rois{r}])
-            
-            T.region = ones(length(T.likelihood),1)*r;
-            T.phase = ones(length(T.likelihood),1)*2; %1 = prep, 2 = prod
-            
-            save([pcmDir '/cortical/' rois{r} '_prodPCM.mat'],'Tgroup', 'Tcross', 'T', 'M', 'Gm', 'C')
-            
-            clear('M')
-        end
-        
-    case 'PCM_cortical_do_SearchLight' % Conduct the PCM in subcortical searchlights
-        
-        s=varargin{1};
-        
-        for r=1 %:length(subcortStructs);
-            
-            cd(fullfile(glmDir, subj_name{s}));
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
-            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            out = {fullfile(pcmDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} 'PCMLikelihood.nii'])};
-            
-            
-            % Generate column indices for Cross-validation, where
-            % cell i contains column indices of the respective test and
-            % train set
-            for i=1:nrruns
-                test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
-                train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
-            end;
-            
-            [row,col] = find(prod>0);
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
-            end
-            
-            tstart = tic
-            lmva_spm(fullfile(subcorticalSearchDir,subj_name{s},[subj_name{s} '_' subcortStructs{r} '_volsearch160.mat']),Pselect,out,@combinedclass,'params',{c,run,train,test});
-            telapsed = toc(tstart)
-        end
-        
-    case 'PCM_cortical_reslice_ROI_byhand' %reslice hand-drawn ROIs to functional resolution
+    case 'subcortical_voxel_counts' %provides number of voxels for each subcortical structure
         
         sn = varargin{1};
+        subcortStructs = subcortStructs(2,:);%names from second row
+        voxCount = nan(1,length(subcortStructs));
         
-        refImageDir = [glmDir, '/', subj_name{sn}]; %directories for functional reference image (beta 1)
-        cortROIDir = [pcmDir, '/', subj_name{sn}]; %and for cortical ROIs
-        
-        rois = {'timing_premotorROI', 'integrated_parietalROI'};
-        
-        for r=1:length(rois) %loop through subcortical regions and reslice them to beta image resolution
+        for j=1:length(subcortStructs) %and each subcortical structure...
             
-            matlabbatch{1}.spm.spatial.realign.write.data = {[refImageDir, '/beta_0001.nii']; [cortROIDir, '/', subj_name{sn}, '_', rois{r}, '.nii']};
-            matlabbatch{1}.spm.spatial.realign.write.roptions.which = [2 1];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.interp = 4;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.wrap = [0 0 0];
-            matlabbatch{1}.spm.spatial.realign.write.roptions.mask = 1;
-            matlabbatch{1}.spm.spatial.realign.write.roptions.prefix = 'r';
+            %cd into relevant subject directory
+            cd([subcorticalDir, '/',  subj_name{sn}])
             
-            spm_jobman('run',matlabbatch);
-            disp([rois{r} ' resliced'])
+            %read in .nii file for each subcortical structure
+            vol = spm_vol(['mr' subj_name{sn}, '_', subcortStructs{j}, '.nii']);
+            readVol = spm_read_vols(vol);
+            
+            %count the number of non-zero elements
+            voxelCount = nnz(readVol);
+            
+            %add the count to matrix
+            voxCount(:,j) = voxelCount;
+            
         end
         
-    case 'PCM_cortical_define_mva_area_byhand' %converts RoI from hand-drawn .nii to voxel coordinate .mat for PCM
+        %add names of structures to top row of matrix and save to excel
+        voxCount = num2cell(voxCount);
+        voxCountSave = [subcortStructs; voxCount];
+        
+        writecell(voxCountSave, [subj_name{sn} '_voxelCounts'], 'FileType', 'spreadsheet')
+    case 'subcortical_voxel_counts_group' %like case above, but produces one big group excel sheet. Quite slow...
+        
+        %set voxCount to size subj x structure for later loop
+        subcortStructs = subcortStructs(2,:);%names from second row
+        groupVoxCount = nan(length(anaSubj),length(subcortStructs));
+        %loop counter for subject rows in excel sheet
+        loopCount = 1;
+        
+        for i =anaSubj %for each subject...
+            for j=1:length(subcortStructs) %and each subcortical structure...
+                
+                %cd into relevant subject directory
+                cd([subcorticalDir, '/',  subj_name{i}])
+                
+                %read in .nii file for each subcortical structure
+                vol = spm_vol(['mr' subj_name{i}, '_', subcortStructs{j}, '.nii']);
+                readVol = spm_read_vols(vol);
+                
+                %count the number of non-zero elements
+                voxelCount = nnz(readVol);
+                
+                %add the count to matrix
+                groupVoxCount(loopCount,j) = voxelCount;
+            end
+            %loop counter increase
+            loopCount = loopCount + 1;
+        end
+        
+        %add names of structures to top row of matrix and save to excel
+        groupVoxCount = num2cell(groupVoxCount);
+        voxCountSave = [subcortStructs; groupVoxCount];
+        
+        cd(subcorticalDir)
+        writecell(voxCountSave, 'group_voxelCounts', 'FileType', 'spreadsheet')
+        
+    case 'cerebellum_make_nii' %----------------- BEGINNING OF SUIT RSA (CEREBELLUM) -----------------%
+        %Isolate the cerebellum of each participant - produces 'c_<source>_pcereb' (cerebellar mask) and '<source>_seg1/2' (grey and white matter respectively) images
         
         s=varargin{1};
-        rois = {'timing_premotorROI', 'integrated_parietalROI'};
+        cd([baseDir '/imaging/anatomicals/' subj_name{s}]);
+        disp(['suit isolating ' subj_name{s}])
         
-        % load respective subcortical .nii and extract x y z coordinates for voxels
-        for r=1:length(rois)
-            cd(fullfile(pcmDir, subj_name{s}));
-            V=spm_vol(['r' subj_name{s} '_' rois{r} '.nii']);
-            X=spm_read_vols(V);
-            [i,j,k]=ind2sub(size(X),find(X~=0));
-            vox=[i j k];
-            
-            LI{1} = sub2ind(V.dim,vox(:,1),vox(:,2),vox(:,3)); %convert x y z coordinates into linear index for voxels
-            voxmin = min(vox,[],1); %min x y z coordinates for each voxel
-            voxmax = max(vox,[],1); %max as above
-            n = size(vox,1); %number of voxels
-            
-            save(sprintf('%s_decodeArea_%s.mat',subj_name{s},rois{r}), 'vox', 'LI', 'voxmin', 'voxmax', 'n')
-            disp([rois{r} ' done'])
+        anatomical = {[subj_name{s} '_anatomical.nii']};
+        
+        suit_isolate_seg(anatomical, 'maskp', 0.2) %change maskp for probability value. Higher = tighter mask. Hand-correct using MRIcron if necessary
+    case 'cerebellum_suit_normalise' %normalise the isolated cerebellum to the suit atlas - produces 'affine_<source>.mat' and 'u_a_<name>.nii'
+        
+        s=varargin{1};
+        cd([baseDir '/imaging/anatomicals/' subj_name{s}]);
+        disp(['suit_normalizing ' subj_name{s}])
+        
+        gray = {[subj_name{s} '_anatomical_seg1.nii']}; %grey and white matter images from previous suit stage
+        white = {[subj_name{s} '_anatomical_seg2.nii']};
+        isoMask = {['c_' subj_name{s} '_anatomical_pcereb.nii']}; %isolated cerebellum
+        
+        job.subjND.gray = gray; %put them all into a struct...
+        job.subjND.white = white;
+        job.subjND.isolation = isoMask;
+        
+        suit_normalize_dartel(job) %run the function with the struct as the input
+    case 'cerebellum_make_mask' %restrict area of analysis to grey matter - produces 'maskbrainSUIT.nii'
+        
+        s=varargin{1};
+        
+        if isfolder([baseDir '/imaging/suit/' subj_name{s}]) == 0
+            mkdir([baseDir '/imaging/suit/' subj_name{s}])
         end
         
-    case 'PCM__cortical_fitModels_ROI_byhand' %fits PCM models to data from hand-drawn ROIs
+        mask=fullfile(glmDir, subj_name{s},'mask.nii');
+        %suit=fullfile(anatDir, subj_name{s},['c_', subj_name{s},'_anatomical_pcereb.nii']); %pcereb holds all cerebellum-related regions to a value of 1...
+        suit=fullfile(anatDir, subj_name{s},[subj_name{s}, '_anatomical_seg1.nii']); %whereas _seg1 is only grey matter and sets extra-cerebellar regions (e.g. pons) to values other than 1...
+        omask=fullfile(suitDir, subj_name{s},'maskbrainSUIT.nii');
         
-        %Hand-generate cortical RoIs for each participant (?)
-        %PMv, SPCa
-        %Using MRIcron draw tool
+        spm_imcalc_ui({mask,suit},omask,'i1>0 & i2>0.999',{}); %so including a mask of 0.999 makes sure we only include cerebellar regions.
+    case 'cerebellum_make_search'
         
-        rois = {'timing_premotorROI', 'integrated_parietalROI'};
+        s=varargin{1};
         
-        %load 9 representational models
-        cd(modelDir)
-        files = dir('*.mat');
-        for i=1:length(files)
-            load(files(i).name)
-            models.(D.modelName) = D;
+        radius=16;
+        numVox=160;
+        
+        cd(fullfile(suitDir, subj_name{s}));
+        V=spm_vol('maskbrainSUIT.nii'); %preceded by case suit_make_mask
+        X=spm_read_vols(V);
+        [i,j,k]=ind2sub(size(X),find(X~=0));
+        vox=[i j k];
+        
+        L = [];
+        [L.LI,L.voxmin,L.voxmax,L.n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvoxSUIT.nii');
+        L.voxel = vox;
+        save('volsearch160SUIT.mat', 'L')
+    case 'cerebellum_run_search'
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Searchlight file
+        load(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
+            end
+        else
         end
-        clear('D')
-        anaSubj = [3, 5, 6, 7, 9];
         
-        %load subcortical data for analysis
-        loopCounter = 1;
-        for s=anaSubj
-            %         for s=3
-            
-            cd(fullfile(glmDir, subj_name{s})); %load SPM data
-            load SPM;
-            nrruns=length(SPM.nscan);
-            
-            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
-            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
-            prep=[repmat(prep,1,nrruns) runBSL];
-            
-            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
-            prod=[repmat(prod,1,nrruns) runBSL];
-            
-            c=repmat(1:8,1,nrruns)'; % extract conditions (leave out errors!)
-            run=[1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6]'; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
-            
-            [~,prepCol] = find(prep>0); prepCol = reshape(prepCol,4,[]);
-            [~,prodCol] = find(prod>0); prodCol = reshape(prodCol,4,[]);
-            col = [prepCol; prodCol]; col = reshape(col,1,[]);
-            
-            
-            P={SPM.Vbeta(1:126).fname}';
-            Pselect=[];
-            for i=1:length(col)
-                Pselect{i,1}= P{col(i)};
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All'], 'outDir', fullfile(suitDir, subj_name{s}))
+    case 'cerebellum_run_search_integrated' %runs the searchlight, but subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY) within searchlight function
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Searchlight file
+        load(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
             end
+        end
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_cor4main_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All_integrated'], 'outDir', fullfile(suitDir, subj_name{s}))
+    case 'cerebellum_smooth'
+        
+        s=varargin{1};
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} 'RSA_All_LDC.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} 'RSA_ALL_sLDC.nii']);
+        spm_smooth(comb,scomb,[2 2 2]); %smooth with 2mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} 'RSA_All_integrated_LDC.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
+        spm_smooth(comb,scomb,[2 2 2]); %smooth with 2mm kernel
+    case 'cerebellum_calc_dissimilarity_maps' %extract each condition (overall, order, timing, etc) from RSA_ALL_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %overall prep, overall prod, overall cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'overall_prep', 'overall_prod', 'overall_cross', ...
+            'order_prep',                                'order_prod',                                'order_cross', ...
+            'timing_prep',                               'timing_prod',                               'timing_cross';...
+            prepCols == 1,  prodCols == 1,  crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0, prodCols == 1 & ordDiff == 1 & timDiff == 0, crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0, prodCols == 1 & timDiff == 1 & ordDiff == 0, crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_sLDC.nii']);
             
-            S = load(fullfile(pcmDir,subj_name{s},[subj_name{s} '_decodeArea_' rois{2} '.mat']));
-            Vin = spm_vol(char(Pselect));
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
             
-            %extract voxels in decoding area from beta files and pass to MVPA function
-            linVox=unique(cat(2,S.LI{:})');
-            [I,J,K]=ind2sub(Vin(1).dim,linVox);
-            X = zeros(length(linVox),length(Vin));
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cerebellum_calc_dissimilarity_maps_integrated' %extract integrated prep, prod, cross from RSA_ALL_integrated_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %Int prep, Int prod, int cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            'orderInt_prep',                                'orderInt_prod',                                'orderInt_cross', ...
+            'timingInt_prep',                               'timingInt_prod',                               'timingInt_cross';...
+            prepCols == 1,     prodCols == 1,     crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0,    prodCols == 1 & ordDiff == 1 & timDiff == 0,    crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0,    prodCols == 1 & timDiff == 1 & ordDiff == 0,    crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
             
-            for i=1:length(Vin) %this gives us a voxelN x betaN matrix
-                X(:,i)=spm_sample_vol(Vin(i),double(I),double(J),double(K),0);
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cerebellum_normalise'
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/suit/']);
+        
+        if isfolder(suitGroupDir) == 0
+            mkdir(suitGroupDir)
+        end
+        disp(['suit_reslicing ' subj_name{sn}])
+        
+        inDir = [suitDir '/' subj_name{sn} '/']; %path to where data is stored (to be normalised)
+        outDir = suitGroupRSADir;
+        filenames = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        
+        % prepare files for input
+        affine = {[anatDir '/' subj_name{sn} '/' 'Affine_' subj_name{sn} '_anatomical_seg1.mat']};
+        flowfield = {[anatDir '/' subj_name{sn} '/' 'u_a_' subj_name{sn} '_anatomical_seg1.nii']};
+        
+        dataFiles = cell(length(filenames),1); %loop to put all full input file directories into a cell
+        for i=1:length(filenames)
+            dataFiles{i} = [inDir, subj_name{sn}, '_LDC_' filenames{i}, '.nii'];
+        end
+        
+        mask = {[anatDir '/' subj_name{sn} '/' 'c_' subj_name{sn} '_anatomical_pcereb.nii']};
+        
+        outFiles = cell(length(filenames),1);
+        for i=1:length(filenames)
+            outFiles{i} = [outDir, '/', filenames{i}, '_', subj_name{sn}, '.nii'];
+        end
+        
+        %% prepare struct for function
+        job.subj.affineTr = affine; %fill job.subj. struct with respective items
+        job.subj.flowfield = flowfield;
+        job.subj.resample = dataFiles;
+        job.subj.mask = mask;
+        job.subj.outname = outFiles;
+        
+        %function
+        suit_reslice_dartel(job)
+    case 'cerebellum_group_avg'
+        
+        if ~isfolder(fullfile(suitGroupRSADir, 'average'))
+            mkdir(fullfile(suitGroupRSADir, 'average'))
+        end
+        cd(fullfile(suitGroupRSADir, 'average'))
+        
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        
+        for i=1:length(conds)
+            loopCount = 1;
+            for s = anaSubj
+                Vi(loopCount) = spm_vol(fullfile(suitGroupRSADir, [conds{i} '_' subj_name{s} '.nii']));
+                loopCount = loopCount + 1;
             end
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = ['avg_' conds{i} '_LDC.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
             
-            [nanidx, ~] = find(isnan(X)); %remove nan values contained in beta image due to signal loss(?)
-            nanidx = unique(nanidx);
-            X(nanidx,:) = [];
-            Y{:,loopCounter}=X';
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cerebellum_group_randomeffects'
+        
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        
+        dataDir = strcat('RSA_', conds);
+        
+        contrastN = length(dataDir);
+        images = repmat(conds', 1, length(anaSubj));
+        subNii = repmat (subj_name(anaSubj), length(dataDir), 1);
+        fileName = strcat (images, '_', subNii, '.nii');  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts
+            glmscndDir = fullfile(suitGroupRSADir, dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;  %Adjust directory
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (suitGroupRSADir, fileName(i,:))';  %%Select files from matrix
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
             
-            loopCounter = loopCounter+1;
-        end%subj loop
+            spm_jobman('run',matlabbatch);
+        end
+    case 'cerebellum_group_estimate'
         
-        for i=1:length(Y)
-            G_hat(:,:,i)=pcm_estGCrossval(Y{:,i},run,c);
-        end;
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        contrastN = length(conds);
         
-        Gm = mean(G_hat,3); % Mean estimate
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat{1} = fullfile (suitGroupRSADir, ['RSA_' conds{i}], 'SPM.mat');  %Adjust directory
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+    case 'cerebellum_plot_flatmap'
         
-        orderPrepModel.G = pcm_estGCrossval(models.ordPrep.data,run,c); orderPrepModel.G(isnan(orderPrepModel.G)) = 0;
-        timingPrepModel.G = pcm_estGCrossval(models.tempPrep.data,run,c); timingPrepModel.G(isnan(timingPrepModel.G)) = 0;
-        integratedPrepModel.G = pcm_estGCrossval(models.intPrep.data,run,c); integratedPrepModel.G(isnan(integratedPrepModel.G)) = 0;
+        cd(suitGroupRSADir)
         
-        orderProdModel.G = pcm_estGCrossval(models.ordProd.data,run,c); orderProdModel.G(isnan(orderProdModel.G)) = 0;
-        timingProdModel.G = pcm_estGCrossval(models.tempProd.data,run,c); timingProdModel.G(isnan(timingProdModel.G)) = 0;
-        integratedProdModel.G = pcm_estGCrossval(models.intProd.data,run,c); integratedProdModel.G(isnan(integratedProdModel.G)) = 0;
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        folderNames = strcat('RSA_', conds);
         
-        orderSwitchModel.G = pcm_estGCrossval(models.ordSwitch.data,run,c); orderSwitchModel.G(isnan(orderSwitchModel.G)) = 0;
-        timingSwitchModel.G = pcm_estGCrossval(models.tempSwitch.data,run,c); timingSwitchModel.G(isnan(timingSwitchModel.G)) = 0;
-        integratedSwitchModel.G = pcm_estGCrossval(models.intSwitch.data,run,c); integratedSwitchModel.G(isnan(integratedSwitchModel.G)) = 0;
+        fileName = fullfile(folderNames{4}, 'spmT_0001.nii');
+        surfMap = suit_map2surf(fileName);
+        figure
+        suit_plotflatmap(surfMap, 'threshold', 3.48, 'cscale', [0, 3.5])
+        
+        clear fileName
+        
+        fileName{1} = fullfile('RSA_timing_prep', 'spmT_0001.nii');
+        fileName{2} = fullfile('RSA_integrated_prep', 'spmT_0001.nii');
+        fileName{3} = fullfile('RSA_order_prep', 'spmT_0001.nii');
+        surfMap(:,1) = suit_map2surf(fileName{1});
+        surfMap(:,2) = suit_map2surf(fileName{2});
+        surfMap(:,3) = suit_map2surf(fileName{3});
         
         figure
-        subplot(3,7,[1, 8]);
+        suit_plotflatmap(surfMap, 'type', 'rgb', 'threshold', 10, 'cscale', [0, 3.5])
+        
+        fileName{1} = fullfile('RSA_timing_prod', 'spmT_0001.nii');
+        fileName{2} = fullfile('RSA_integrated_prod', 'spmT_0001.nii');
+        fileName{3} = fullfile('RSA_order_prod', 'spmT_0001.nii');
+        surfMap(:,1) = suit_map2surf(fileName{1});
+        surfMap(:,2) = suit_map2surf(fileName{2});
+        surfMap(:,3) = suit_map2surf(fileName{3});
+        
+        figure
+        suit_plotflatmap(surfMap, 'type', 'rgb', 'threshold', 10, 'cscale', [0, 3.5])
+        
+    case 'cortical_make_search'
+        
+        s=varargin{1};
+        
+        radius=16;
+        numVox=160;
+        
+        cd(glmDir);
+        V=spm_vol(fullfile(subj_name{s}, 'maskbrain.nii')); %preceded by case suit_make_mask
+        X=spm_read_vols(V);
+        [i,j,k]=ind2sub(size(X),find(X~=0));
+        vox=[i j k];
+        
+        L = [];
+        [L.LI,L.voxmin,L.voxmax,L.n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[], fullfile(subj_name{s}, 'mva160_numvoxRSA.nii'));
+        L.voxel = vox;
+        save(fullfile(subj_name{s}, 'volsearch160RSA.mat'), 'L')
+    case 'cortical_run_search'
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        rsaSubjFolder = fullfile(rsaDir, 'cortical', subj_name{s});
+        if ~isfolder(rsaSubjFolder)
+            mkdir(rsaSubjFolder)
+        end
+        cd(rsaSubjFolder)
+        
+        %%% Searchlight file
+        load(fullfile(glmDir,subj_name{s},'volsearch160RSA.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
+            end
+        else
+        end
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All'], 'outDir', rsaSubjFolder)
+    case 'cortical_run_search_integrated' %runs the searchlight, but subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY) within searchlight function
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        cd(fullfile(rsaDir, 'cortical', subj_name{s}))
+        
+        %%% Searchlight file
+        load(fullfile(glmDir,subj_name{s},'volsearch160RSA.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
+            end
+        end
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_cor4main_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All_integrated'], 'outDir', fullfile(rsaDir, 'cortical', subj_name{s}))
+    case 'cortical_smooth'
+        
+        s=varargin{1};
+        rsaCorticalDir = fullfile(rsaDir, 'cortical');
+        
+        comb=fullfile(rsaCorticalDir, subj_name{s},[subj_name{s} 'RSA_All_LDC.nii']); %%MVPA smoother
+        scomb=fullfile(rsaCorticalDir, subj_name{s},[subj_name{s} 'RSA_ALL_sLDC.nii']);
+        spm_smooth(comb,scomb,[2 2 2]); %smooth with 2mm kernel
+        
+        comb=fullfile(rsaCorticalDir, subj_name{s},[subj_name{s} 'RSA_All_integrated_LDC.nii']); %%MVPA smoother
+        scomb=fullfile(rsaCorticalDir, subj_name{s},[subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
+        spm_smooth(comb,scomb,[2 2 2]); %smooth with 2mm kernel
+    case 'cortical_calc_dissimilarity_maps' %extract each condition (overall, order, timing, etc) from RSA_ALL_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %overall prep, overall prod, overall cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(rsaCorticalDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'overall_prep', 'overall_prod', 'overall_cross', ...
+            'order_prep',                                'order_prod',                                'order_cross', ...
+            'timing_prep',                               'timing_prod',                               'timing_cross';...
+            prepCols == 1,  prodCols == 1,  crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0, prodCols == 1 & ordDiff == 1 & timDiff == 0, crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0, prodCols == 1 & timDiff == 1 & ordDiff == 0, crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_sLDC.nii']);
+            
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cortical_calc_dissimilarity_maps_integrated' %extract integrated prep, prod, cross from RSA_ALL_integrated_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %Int prep, Int prod, int cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(rsaCorticalDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            'orderInt_prep',                                'orderInt_prod',                                'orderInt_cross', ...
+            'timingInt_prep',                               'timingInt_prod',                               'timingInt_cross';...
+            prepCols == 1,     prodCols == 1,     crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0,    prodCols == 1 & ordDiff == 1 & timDiff == 0,    crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0,    prodCols == 1 & timDiff == 1 & ordDiff == 0,    crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
+            
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cortical_normalise'
+        sn=varargin{1};
+        cd([rsaDir '/cortical/']);
+        
+        if isfolder(rsaCorticalGroupDir) == 0
+            mkdir(rsaCorticalGroupDir)
+        end
+        disp(['normalising ' subj_name{sn}])
+        
+        %MVPA accuracy maps
+        images= {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross'...
+            }; % please add other images as required, e.g. spmT_...
+        
+        s=varargin{1};
+        defor= fullfile(anatDir, subj_name{s}, [subj_name{s}, '_anatomical_seg_sn.mat']);
+        for j=1:numel(images)
+            [~,name,~]=spm_fileparts(images{j});
+            in_images{1}= fullfile(rsaCorticalDir,subj_name{s},[subj_name{s} '_LDC_' images{j} '.nii']);
+            out_images{1}= fullfile(rsaCorticalGroupDir,[name '_' subj_name{s} '.nii']);
+            spmj_normalization_write(defor, in_images,'outimages',out_images); %Trilinear interpolation
+        end
+    case 'cortical_group_avg'
+        
+        if ~isfolder(fullfile(rsaCorticalGroupDir, 'average'))
+            mkdir(fullfile(rsaCorticalGroupDir, 'average'))
+        end
+        cd(fullfile(rsaCorticalGroupDir, 'average'))
+        
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        
+        for i=1:length(conds)
+            loopCount = 1;
+            for s = anaSubj
+                Vi(loopCount) = spm_vol(fullfile(rsaCorticalGroupDir, [conds{i} '_' subj_name{s} '.nii']));
+                loopCount = loopCount + 1;
+            end
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = ['avg_' conds{i} '_LDC.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+    case 'cortical_group_randomeffects'
+        
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        
+        dataDir = strcat('RSA_', conds);
+        
+        contrastN = length(dataDir);
+        images = repmat(conds', 1, length(anaSubj));
+        subNii = repmat (subj_name(anaSubj), length(dataDir), 1);
+        fileName = strcat (images, '_', subNii, '.nii');  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts
+            glmscndDir = fullfile(rsaCorticalGroupDir, dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;  %Adjust directory
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (rsaCorticalGroupDir, fileName(i,:))';  %%Select files from matrix
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+    case 'cortical_group_estimate'
+        
+        conds = {...
+            'overall_prep',    'overall_prod',    'overall_cross', ...
+            'order_prep',      'order_prod',      'order_cross', ...
+            'timing_prep',     'timing_prod',     'timing_cross'...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            };
+        contrastN = length(conds);
+        
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat{1} = fullfile (rsaCorticalGroupDir, ['RSA_' conds{i}], 'SPM.mat');  %Adjust directory
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+        
+    case 'simulations_RSA_LDA'
+        
+        %%%Prepare variables
+        prepProd = 1;
+        vord     = [0.3 0.1];
+        vtemp    = [0.4 0.7];
+        vinter   = [0.6 0.8];
+        vnoise   = 0.5;
+        nIter    = 500;%acts as subj number
+        
+        vararginoptions(varargin,{'prepProd','vord','vtemp','vinter','vnoise','nIter','sn'});
+        A=[]; %data struct
+        B=[]; %output struct - stores distances, LDA, G matrix
+        D=[]; %raw data store
+        
+        %%%Prepare condition and partition (run) vectors
+        nrruns = 6; nCond = 8;
+        runC      = repmat(1:nrruns,nCond,1); %labelling runs 1:6 (imaging runs)
+        runC      = reshape(runC,1,[])';
+        condC     = repmat((1:nCond)', nrruns, 1); %labelling conditions 1:4 (sequences)
+        condCOrd  = repmat([1 1 2 2 3 3 4 4]', 6, 1);
+        condCTemp = repmat([1 2 1 2 3 4 3 4]', 6, 1);
+        
+        %%%Generate data
+        for i=1:nIter %for 'subject' n
+            %make the data based on input specifications
+            Y=prepProdSimu_makedataPP('prepProd',prepProd,'vord',vord,'vtemp',vtemp,'vinter',vinter,'vnoise',vnoise);
+            
+            A.data{i} = Y;
+            
+            %%%Generate distances vector
+            [A.d{i},     A.Sig{i}]     = rsa.distanceLDC(A.data{i}, runC, condC);
+            [A.dOrd{i},  A.SigOrd{i}]  = rsa.distanceLDC_oneOut_RY(A.data{i}, runC, condC, condCOrd);
+            [A.dTemp{i}, A.SigTemp{i}] = rsa.distanceLDC_oneOut_RY(A.data{i}, runC, condC, condCTemp);
+            [A.dInt{i},  A.SigInt{i}]  = rsa.distanceLDC_cor4main_RY(A.data{i}, runC, condC);
+            
+            %%%Run linear decoding
+            prepData = [A.data{i}(1:4,:); A.data{i}(9:12,:);  A.data{i}(17:20,:); A.data{i}(25:28,:); A.data{i}(33:36,:); A.data{i}(41:44,:)];
+            prodData = [A.data{i}(5:8,:); A.data{i}(13:16,:); A.data{i}(21:24,:); A.data{i}(29:32,:); A.data{i}(37:40,:); A.data{i}(45:48,:)];
+            
+            %               accuracy columns
+            %1: overall,        2: order,          3: timing,         4:integrated(Z)    5: integrated(acc) for debugging
+            [prepAccuracy(i,1), prepAccuracy(i,2), prepAccuracy(i,3), prepAccuracy(i,4), prepAccuracy(i,5)]=prepProdSimu_classify(prepData);
+            [prodAccuracy(i,1), prodAccuracy(i,2), prodAccuracy(i,3), prodAccuracy(i,4), prodAccuracy(i,5)]=prepProdSimu_classify(prodData);
+        end%for subject n
+        
+        % Identify and extract values for overall, order, and timing
+        % within preparation, production, and cross-phase
+        diffVectorOvr  = [... %index (1s are where condition is different)
+            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1; ...%overall
+            ];
+        %0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0; ...%order
+        %1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1; ...%timing
+        %0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 0 0 1 0 0 0 0 0 1 1 0 0; ...%integrated
+        
+        %diffVector  = [...
+        %diffVector(1,:); ...%overall stays the same
+        %diffVector(2,:) == 1 & diffVector(3,:) == 0; ...%ONLY sequences with diff order & SAME timing
+        %diffVector(3,:) == 1 & diffVector(2,:) == 0; ...%vice versa as above
+        %diffVector(4,:); ...%integrated stays the same
+        %];
+        %diffVectorInt = [...
+            %1 1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 0 1 0 1 1 0 1 1 0 0 1 1; ...%integrated
+            %];
+        phaseVector = [...%index (1s are where phase is different)
+            1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; ...%prep
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1; ...%prod
+            0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0  ...%cross
+            ];
+        phaseVectorOneOut = [...
+            1 0 0 0 0 0; ...%prep
+            0 0 0 0 0 1; ...%prod
+            0 1 1 1 1 0; ...%cross
+            ];
+        
+        %%%Loop over subjs, conditions, and phases, and store distances as
+        %%%struct to plot later
+        loopCounter = 1;
+        
+        %%% Overall
+        for s=1:nIter%for subj
+            for i=1:size(phaseVector, 1)%for phase
+                for j=1:size(diffVectorOvr, 1)%for conds
+                    B.dist(loopCounter,1)  = mean(A.d{s}(phaseVector(i,:) & diffVectorOvr(j,:)));
+                    B.phase(loopCounter,1) = i;
+                    B.cond(loopCounter,1)  = j;
+                    B.sn(loopCounter,1)    = s;
+                    loopCounter = loopCounter + 1;
+                end%for conds
+            end%for phase
+        end%for subj
+        
+        %%% Order and timing
+        for s=1:nIter%for subj
+            for i=1:size(phaseVectorOneOut, 1)%for phase
+                    B.dist(loopCounter,1)  = mean(A.dOrd{s}(phaseVectorOneOut(i,:) == 1));
+                    B.phase(loopCounter,1) = i;
+                    B.cond(loopCounter,1)  = 2;
+                    B.sn(loopCounter,1)    = s;
+                    loopCounter = loopCounter + 1;
+                    B.dist(loopCounter,1)  = mean(A.dTemp{s}(phaseVectorOneOut(i,:) == 1));
+                    B.phase(loopCounter,1) = i;
+                    B.cond(loopCounter,1)  = 3;
+                    B.sn(loopCounter,1)    = s;
+                    loopCounter = loopCounter + 1;
+            end%for phase
+        end%for subj
+        
+        %%% Integrated 
+        for s=1:nIter%for subj
+            for i=1:size(phaseVector, 1)%for phase
+                B.dist(loopCounter,1)  = mean(A.dInt{s}(phaseVector(i,:) & diffVectorOvr(1,:)));
+                B.phase(loopCounter,1) = i;
+                B.cond(loopCounter,1)  = 4;
+                B.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end%for phase
+        end%for subj
+        
+        loopCounter = 1;
+        for s=1:nIter%for subj
+            for i=1:size(prepAccuracy, 2)
+                C.acc(loopCounter,1)   = prepAccuracy(s, i);
+                C.phase(loopCounter,1) = 1;
+                C.cond(loopCounter,1)  = i;
+                C.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end
+        end%for subj
+        
+        for s=1:nIter%for subj
+            for i=1:size(prodAccuracy, 2)
+                C.acc(loopCounter,1)   = prodAccuracy(s, i);
+                C.phase(loopCounter,1) = 2;
+                C.cond(loopCounter,1)  = i;
+                C.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end
+        end%for subj
+        
+        
+        
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(B,{'sn', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', B.phase < 3);
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        barplot([T.phase, T.cond], T.dist, 'split', T.cond, 'facecolor', colour)
+        ylabel('Crossnobis dissimilarity')
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        %-------------------------------------------------------------------------------%
+        
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'});
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        barplot([T.phase, T.cond], T.acc, 'split', T.cond, 'facecolor', colour)
+        ylabel('Decoding accuracy (Z)')
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        %-------------------------------------------------------------------------------%
+        
+        labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
+        
+        %%%Multi-dimensional scaling - RDM
+        for s=1:length(A.data)%for iter
+            d_hat(:,:,s)= squareform(A.d{s}); %calc representational dissimilarity matrix
+        end%forIter
+        dm = mean(d_hat,3); % Mean estimate
+        
+        figure
+        %subplot(1,2,1);
         H = eye(8)-ones(8)/8;
-        imagesc(H*Gm*H');
-        title('Empirical Data')
+        imagesc(H*dm*H');
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        xticks(1:8)
+        xticklabels(labels);%p=prep, P=prod
+        yticks(1:8)
+        yticklabels(labels)
         
-        C= pcm_indicatorMatrix('allpairs',[1:8]');
-        [COORD,l]=pcm_classicalMDS(Gm,'contrast',C);
-        subplot(3,7,15);
-        plot(COORD(:,1),COORD(:,2),'o');
-        axis equal;
+        % %%% Multi-dimensional scaling
+        try
+            RDMs.RDM   = dm;
+            RDMs.name  = 'simulation';
+            RDMs.color = [0 0 1];
+            
+            userOptions = prepProdSimuPP_defineUserOptions(baseDir);
+            
+            rsa.MDSConditions(RDMs, userOptions);
+        catch
+            disp('MDS Failed.')
+        end
+        %----------------------------------------------------------------------------------------------%
         
-        % visualise models
-        subplot(3,7,2);
-        imagesc(orderPrepModel.G);
-        title('Order Prep')
+        %%%Multi-dimensional scaling - RDM
+        for s=1:length(A.data)%for iter
+            d_hatInt(:,:,s)= squareform(A.dInt{s}); %calc representational dissimilarity matrix
+        end%forIter
+        dmInt = mean(d_hatInt,3); % Mean estimate
         
-        subplot(3,7,9);
-        imagesc(orderProdModel.G);
-        title('Order Prod')
+        figure
+        %subplot(1,2,1);
+        H = eye(8)-ones(8)/8;
+        imagesc(H*dmInt*H');
+        title('Corrected for main (Integrated)');
+        xticks(1:8)
+        xticklabels(labels);%p=prep, P=prod
+        yticks(1:8)
+        yticklabels(labels)
         
-        subplot(3,7,16);
-        imagesc(orderSwitchModel.G);
-        title('Order Switch')
+        % %%% Multi-dimensional scaling
+        try
+            RDMsInt.RDM   = dmInt;
+            RDMsInt.name  = 'simulation_integrated';
+            RDMsInt.color = [0 0 1];
+            
+            userOptions = prepProdSimuPP_defineUserOptions;
+            
+            rsa.MDSConditions(RDMsInt, userOptions);
+        catch
+            disp('MDS Failed.')
+        end
         
-        subplot(3,7,3);
-        imagesc(timingPrepModel.G);
-        title('Timing Prep')
-        
-        subplot(3,7,10);
-        imagesc(timingProdModel.G);
-        title('Timing Prod')
-        
-        subplot(3,7,17);
-        imagesc(timingSwitchModel.G);
-        title('Timing Switch')
-        
-        subplot(3,7,4);
-        imagesc(integratedPrepModel.G);
-        title('Integrated Prep')
-        
-        subplot(3,7,11);
-        imagesc(integratedProdModel.G);
-        title('Integrated Prod')
-        
-        subplot(3,7,18);
-        imagesc(integratedSwitchModel.G);
-        title('Integrated Switch')
-        
-        % ----------------------------------------------------------------
-        % Now build the models
-        % Model 1: Null model for baseline: here we use a model which has all finger
-        % Patterns be independent - i.e. all finger pairs are equally far away from
-        % each other
-        M{1}.type       = 'component';
-        M{1}.numGparams = 1;
-        M{1}.Gc         = ones(8);
-        M{1}.name       = 'null';
-        
-        % Models 2-4: Order models, derived from simulations with
-        % high order decoding during prep, prod, & switch respectively
-        M{2}.type       = 'component';
-        M{2}.numGparams = 1;
-        M{2}.Gc         = orderPrepModel.G;
-        M{2}.name       = 'orderPrep';
-        
-        M{3}.type       = 'component';
-        M{3}.numGparams = 1;
-        M{3}.Gc         = orderProdModel.G;
-        M{3}.name       = 'orderProd';
-        
-        M{4}.type       = 'component';
-        M{4}.numGparams = 1;
-        M{4}.Gc         = orderSwitchModel.G;
-        M{4}.name       = 'orderSwitch';
-        
-        % Models 5-7: Timing models, derived from simulations with
-        % high timing decoding during prep, prod, & switch respectively
-        M{5}.type       = 'component';
-        M{5}.numGparams = 1;
-        M{5}.Gc         = timingPrepModel.G;
-        M{5}.name       = 'timingPrep';
-        
-        M{6}.type       = 'component';
-        M{6}.numGparams = 1;
-        M{6}.Gc         = timingProdModel.G;
-        M{6}.name       = 'timingProd';
-        
-        M{7}.type       = 'component';
-        M{7}.numGparams = 1;
-        M{7}.Gc         = timingSwitchModel.G;
-        M{7}.name       = 'timingSwitch';
-        
-        % Models 8-10: Integrated models, derived from simulations with
-        % high integrated decoding
-        M{8}.type       = 'component';
-        M{8}.numGparams = 1;
-        M{8}.Gc         = integratedPrepModel.G;
-        M{8}.name       = 'integratedPrep';
-        
-        M{9}.type       = 'component';
-        M{9}.numGparams = 1;
-        M{9}.Gc         = integratedProdModel.G;
-        M{9}.name       = 'integratedProd';
-        
-        M{10}.type       = 'component';
-        M{10}.numGparams = 1;
-        M{10}.Gc         = integratedSwitchModel.G;
-        M{10}.name       = 'integratedSwitch';
-        
-        % Model 11: Additive mixture between order and timing models
-        M{11}.type       = 'component';
-        M{11}.numGparams = 2;
-        M{11}.Gc(:,:,1)  = orderPrepModel.G;
-        M{11}.Gc(:,:,2)  = orderProdModel.G;
-        M{11}.name       = 'orderPrep + orderProd';
-        
-        % Model 12: Additive mixture between order and timing models
-        M{12}.type       = 'component';
-        M{12}.numGparams = 2;
-        M{12}.Gc(:,:,1)  = timingPrepModel.G;
-        M{12}.Gc(:,:,2)  = timingProdModel.G;
-        M{12}.name       = 'timingPrep + timingProd';
-        
-        % Model 6: Free model as Noise ceiling
-        M{13}.type       = 'freedirect';
-        M{13}.numCond    = 8;
-        M{13}.name       = 'noiseceiling';
-        M{13}            = pcm_prepFreeModel(M{13});
-        
-        % Treat the run effect as random or fixed?
-        % We are using a fixed run effect here, as we are not interested in the
-        % activity relative the the baseline (rest) - so as in RSA, we simply
-        % subtract out the mean patttern across all conditions.
-        runEffect  = 'fixed';
-        
-        % Fit the models on the group level
-        [Tgroup,theta] = pcm_fitModelGroup(Y,M,run,c,'runEffect',runEffect,'fitScale',1);
-        
-        % Fit the models through cross-subject crossvalidation
-        [Tcross,thetaCr] = pcm_fitModelGroupCrossval(Y,M,run,c,'runEffect',runEffect,'groupFit',theta,'fitScale',1);
-        
-        % Provide a plot of the crossvalidated likelihoods
-        subplot(3,7,[5 6 7 12 13 14 19 20 21]);
-        T = pcm_plotModelLikelihood(Tcross,M,'upperceil',Tgroup.likelihood(:,length(M)));
-        %         title('Preparation')
-        
+        T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', C.phase == 1);
+        barplot(T.cond,T.acc,'split',T.cond,'style_bold','leg',{'ovr', 'ord', 'temp' ,'inter'},'leglocation','north');
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        ylabel('acc');
+        xlabel('factor');
         
 end%switch
-
 end%function
