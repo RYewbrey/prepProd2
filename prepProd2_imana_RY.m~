@@ -4365,9 +4365,6 @@ switch(what)
             
             A.data{i} = Y;
             
-            %%%Calculate second moment matrix
-            [A.G{i},~]    = pcm_estGCrossval(A.data{i},runC,condC);
-            
             %%%Generate distances vector
             [A.d{i},     A.Sig{i}]     = rsa.distanceLDC(A.data{i}, runC, condC);
             
@@ -4443,32 +4440,52 @@ switch(what)
         
         %%%Multi-dimensional scaling - RDM
         for s=1:length(A.data)%for iter
-            G_hat(:,:,s)= A.G{s}; %calc representational dissimilarity matrix
+            d_hat(:,:,s)= squareform(A.d{s}); %calc representational dissimilarity matrix
         end%forIter
-        Gm = mean(G_hat,3); % Mean estimate
+        Gm = mean(d_hat,3); % Mean estimate
         
         figure%%%RDM
         %subplot(1,2,1);
         ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
         imagesc(rsa.rdm.squareRDM(diag(ind*Gm*ind'))); %display
-        %multiplying variance/covariance by indicator matrix results in
-        %dissimilarity values (crossnobis)
         title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
         xticks(1:8)
         xticklabels(labels);%p=prep, P=prod
         yticks(1:8)
         yticklabels(labels)
         
+        
+        GRegion = G(:,:,R.region == i); %extract region variance/covariance matrices
+        GmRegion = mean(GRegion, 3); %mean across subjs
+        
+        ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
+        imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind')), [0 0.022]); %display
+        %multiplying variance/covariance by indicator matrix results in
+        %dissimilarity values (crossnobis)
+        title([subcortStructs{i} ' RDM (crossnobis)'])
+        
+        figure %%%MDS for each subcortical region
+        C= pcm_indicatorMatrix('allpairs',(1:8)');
+        %C = [1 0 -1 0];
+        C = [1 1 -1 -1 1 1 -1 -1];
+        [COORD,~]=pcm_classicalMDS(GmRegion,'contrast',C);
+        plot(COORD(:,1),COORD(:,2),'o');
+        text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
+        %axis equal;
+        title([subcortStructs{i} ' multi-dimensional scaling'])
+        ylim([-0.03, 0.04])
+        xlim([-0.02, 0.16])
+        
+        
+        % %%% Multi-dimensional scaling
         try
-            figure %%%MDS for each subcortical region
-            C= pcm_indicatorMatrix('allpairs',(1:8)');
-            %C = [1 0 -1 0];
-            %C = [1 1 -1 -1 1 1 -1 -1];
-            [COORD,~]=pcm_classicalMDS(Gm,'contrast',C);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            %axis equal;
-            title([subcortStructs{i} ' multi-dimensional scaling'])
+            RDMs.RDM   = dm;
+            RDMs.name  = 'simulation';
+            RDMs.color = [0 0 1];
+            
+            userOptions = prepProdSimuPP_defineUserOptions(baseDir);
+            
+            rsa.MDSConditions(RDMs, userOptions);
         catch
             disp('MDS Failed.')
         end

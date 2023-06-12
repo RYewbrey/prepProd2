@@ -20,7 +20,7 @@ function [Y]=prepProdSimu_makedataPP(varargin)
 classes=4;
 nr   = 6;%8;   % trial type/class repetitions
 ns   = classes*nr;  % trials/samples <<
-nv   = 160; %160 voxels
+nv   = 1000; %160 voxels
 % nv   = 4000;
 np   = 8;  %parameters or treatment effects (ncolumn of design matrix)
 

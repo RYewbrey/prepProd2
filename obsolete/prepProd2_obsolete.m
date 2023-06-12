@@ -14,6 +14,861 @@ cbRegions = ... %cerebellar ROIs used in prepProd
     {'left_lobule_5', 'left_lobule_6', 'left_lobule_crus_1','left_lobule_crus_2','right_lobule_5', 'right_lobule_6', 'right_lobule_crus_1', 'right_lobule_crus_2'};
 
 switch(ana)
+    
+    case 'suit_segment' %%%%%%%%%%%%%%%%%%% BEGINNING OF SUIT DECODING ANALYSIS (CEREBELLUM) %%%%%%%%%%%%%%%%%%%%%%%
+        %Isolate the cerebellum of each participant - produces 'c_<source>_pcereb' (cerebellar mask) and '<source>_seg1/2' (grey and white matter respectively) images
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/anatomicals/' subj_name{sn}]);
+        disp(['suit_segmenting ' subj_name{sn}])
+        
+        anatomical = {[subj_name{sn} '_anatomical.nii']};
+        
+        suit_isolate_seg(anatomical, 'maskp', 0.2) %change maskp for probability value. Higher = tighter mask. Hand-correct using MRIcron if necessary
+    case 'suit_make_mask' %restrict area of analysis to grey matter - produces 'maskbrainSUIT.nii'
+        
+        s=varargin{1};
+        
+        if isfolder([baseDir '/imaging/suit/' subj_name{s}]) == 0
+            mkdir([baseDir '/imaging/suit/' subj_name{s}])
+        end
+        
+        mask=fullfile(glmDir, subj_name{s},'mask.nii');
+        %         suit=fullfile(anatDir, subj_name{s},['c_', subj_name{s},'_anatomical_pcereb.nii']); %pcereb holds all cerebellum-related regions to a value of 1...
+        suit=fullfile(anatDir, subj_name{s},[subj_name{s}, '_anatomical_seg1.nii']); %whereas _seg1 is only grey matter and sets extra-cerebellar regions (e.g. pons) to values other than 1...
+        omask=fullfile(suitDir, subj_name{s},'maskbrainSUIT.nii');
+        
+        spm_imcalc_ui({mask,suit},omask,'i1>0 & i2>0.999',{}); %so including a mask of 0.999 makes sure we only include cerebellar regions.
+    case 'MVA_searchSUIT' % Define the search lights for the MVA analysis
+        
+        s=varargin{1};
+        
+        radius=16;
+        numVox=160;
+        
+        cd(fullfile(suitDir, subj_name{s}));
+        V=spm_vol('maskbrainSUIT.nii'); %preceded by case suit_make_mask
+        X=spm_read_vols(V);
+        [i,j,k]=ind2sub(size(X),find(X~=0));
+        vox=[i j k];
+        
+        [LI,voxmin,voxmax,n]=lmva_voxelselection(vox(:,:)',vox',[radius numVox],V.mat,V.dim,[],'mva160_numvoxSUIT.nii');
+        save volsearch160SUIT.mat vox LI voxmin voxmax n
+    case 'MVA_do_overallMov_suit'
+        
+        s=varargin{1};
+        
+        cd(fullfile(glmDir, subj_name{s}));
+        load SPM;
+        nrruns=length(SPM.nscan);
+        
+        
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
+        prod=[repmat(prod,1,nrruns) runBSL];
+        
+        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
+        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Comb_160_MovSUIT.nii'])};
+        
+        
+        % Generate column indices for Cross-validation, where
+        % cell i contains column indices of the respective test and
+        % train set
+        for i=1:nrruns
+            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
+            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
+        end;
+        
+        [row,col] = find(prod>0);
+        P={SPM.Vbeta(1:126).fname}';
+        Pselect=[];
+        for i=1:length(col)
+            Pselect{i,1}= P{col(i)};
+        end;
+        
+        tstart = tic
+        lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+        telapsed = toc(tstart)
+    case 'MVA_do_overallPrep_suit'                 % Conduct the classification analysis 4 sequences
+        s=varargin{1};
+        
+        cd(fullfile(glmDir, subj_name{s}));
+        load SPM;
+        nrruns=length(SPM.nscan);
+        
+        
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
+        prep=[repmat(prep,1,nrruns) runBSL];
+        
+        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
+        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Comb_160_Prep.nii'])};
+        
+        
+        % Generate column indices for Cross-validation, where
+        % cell i contains column indices of the respective test and
+        % train set
+        for i=1:nrruns
+            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
+            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
+        end;
+        
+        [row,col] = find(prep>0);
+        P={SPM.Vbeta(1:126).fname}';
+        Pselect=[];
+        for i=1:length(col)
+            Pselect{i,1}= P{col(i)};
+        end;
+        
+        tstart = tic
+        lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+        telapsed = toc(tstart)
+    case 'MVA_do_spatOneout_Mov_suit'
+        sn=varargin{1};
+        
+        for s=sn
+            
+            s=varargin{1};
+            
+            cd(fullfile(glmDir, subj_name{s}));
+            load SPM;
+            nrruns=length(SPM.nscan);
+            
+            
+            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
+            prod=[repmat(prod,1,nrruns) runBSL];
+            
+            c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
+            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+            out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Spat_160_Mov.nii'])};
+            
+            
+            % Generate column indices for cross-validation, where
+            % cell i contains column indices of the respective test and
+            % train set
+            %%%
+            oneout=[1 0; 0 1];
+            oneout=repmat(oneout,1,12);
+            j=0;
+            for i=1:2:nrruns*2
+                j=j+1;
+                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
+                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
+                
+                
+                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
+                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
+                
+            end;
+            
+            [row,col] = find(prod>0);
+            P={SPM.Vbeta(1:126).fname}';
+            Pselect=[];
+            for i=1:length(col)
+                Pselect{i,1}= P{col(i)};
+            end;
+            
+            tstart = tic
+            lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+            telapsed = toc(tstart);
+            
+        end;
+    case 'MVA_do_spatOneout_Prep_suit'
+        sn=varargin{1};
+        
+        for s=sn
+            
+            s=varargin{1};
+            
+            cd(fullfile(glmDir, subj_name{s}));
+            load SPM;
+            nrruns=length(SPM.nscan);
+            
+            
+            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
+            prep=[repmat(prep,1,nrruns) runBSL];
+            
+            c=repmat([1 1 2 2],1,nrruns); % extract conditions (leave out errors!)
+            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+            out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Spat_160_Prep.nii'])};
+            
+            
+            % Generate column indices for cross-validation, where
+            % cell i contains column indices of the respective test and
+            % train set
+            %%%
+            oneout=[1 0; 0 1];
+            oneout=repmat(oneout,1,12);
+            j=0;
+            for i=1:2:nrruns*2
+                j=j+1;
+                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
+                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
+                
+                
+                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
+                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
+                
+            end;
+            
+            [row,col] = find(prep>0);
+            P={SPM.Vbeta(1:126).fname}';
+            Pselect=[];
+            for i=1:length(col)
+                Pselect{i,1}= P{col(i)};
+            end;
+            
+            tstart = tic
+            lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+            telapsed = toc(tstart);
+            
+        end;
+    case 'MVA_do_tempOneout_Mov_suit'
+        sn=varargin{1};
+        
+        for s=sn
+            
+            s=varargin{1};
+            
+            cd(fullfile(glmDir, subj_name{s}));
+            load SPM;
+            nrruns=length(SPM.nscan);
+            
+            
+            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+            prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
+            prod=[repmat(prod,1,nrruns) runBSL];
+            
+            c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
+            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+            out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Temp_160_Mov.nii'])};
+            
+            
+            % Generate column indices for cross-validation, where
+            % cell i contains column indices of the respective test and
+            % train set
+            %%%
+            oneout=[1 1 0 0; 0 0 1 1];
+            oneout=repmat(oneout,1,6);
+            j=0;
+            for i=1:2:nrruns*2
+                j=j+1;
+                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
+                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
+                
+                
+                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
+                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
+                
+            end;
+            
+            [row,col] = find(prod>0);
+            P={SPM.Vbeta(1:126).fname}';
+            Pselect=[];
+            for i=1:length(col)
+                Pselect{i,1}= P{col(i)};
+            end;
+            
+            tstart = tic
+            lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+            telapsed = toc(tstart);
+            
+        end;
+    case 'MVA_do_tempOneout_Prep_suit'
+        sn=varargin{1};
+        
+        for s=sn
+            
+            s=varargin{1};
+            
+            cd(fullfile(glmDir, subj_name{s}));
+            load SPM;
+            nrruns=length(SPM.nscan);
+            
+            
+            runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+            prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
+            prep=[repmat(prep,1,nrruns) runBSL];
+            
+            c=repmat([1 2 1 2],1,nrruns); % extract conditions (leave out errors!)
+            run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+            out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Temp_160_Prep.nii'])};
+            
+            
+            % Generate column indices for cross-validation, where
+            % cell i contains column indices of the respective test and
+            % train set
+            %%%
+            oneout=[1 1 0 0; 0 0 1 1];
+            oneout=repmat(oneout,1,6);
+            j=0;
+            for i=1:2:nrruns*2
+                j=j+1;
+                test{i}   =find(run==j & oneout(1,:)==1); % Classify S1 vs S2 with T1
+                test{i+1} =find(run==j & oneout(2,:)==1); % Classify S1 vs S2 with T2
+                
+                
+                train{i}  =find(run~=j & oneout(1,:)~=1); % Train on S1 vs S2 with T2 ....
+                train{i+1}=find(run~=j & oneout(2,:)~=1); % Train on S1 vs S2 with T1 in different runs from testing
+                
+            end;
+            
+            [row,col] = find(prep>0);
+            P={SPM.Vbeta(1:126).fname}';
+            Pselect=[];
+            for i=1:length(col)
+                Pselect{i,1}= P{col(i)};
+            end;
+            
+            tstart = tic
+            lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@combinedclass,'params',{c,run,train,test});
+            telapsed = toc(tstart);
+            
+        end;
+    case 'MVA_do_Int_Mov_suit'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
+        s=varargin{1};
+        
+        cd(fullfile(glmDir, subj_name{s}));
+        load SPM;
+        nrruns=length(SPM.nscan);
+        
+        
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
+        prod=[repmat(prod,1,nrruns) runBSL];
+        
+        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
+        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Int_160_Mov.nii'])};
+        
+        
+        % Generate column indices for Cross-validation, where
+        % cell i contains column indices of the respective test and
+        % train set
+        for i=1:nrruns
+            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
+            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
+        end;
+        
+        [row,col] = find(prod>0);
+        P={SPM.Vbeta(1:126).fname}';
+        Pselect=[];
+        for i=1:length(col)
+            Pselect{i,1}= P{col(i)};
+        end;
+        
+        tstart = tic
+        lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
+        telapsed = toc(tstart)
+    case 'MVA_do_Int_Prep_suit'    %'integrated' (subtracts out main effects, i.e. common patterns for T1, T2, S1, S2 and classifies residual)
+        s=varargin{1};
+        
+        cd(fullfile(glmDir, subj_name{s}));
+        load SPM;
+        nrruns=length(SPM.nscan);
+        
+        
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
+        prep=[repmat(prep,1,nrruns) runBSL];
+        
+        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
+        run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
+        out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Int_160_Prep.nii'])};
+        
+        
+        % Generate column indices for Cross-validation, where
+        % cell i contains column indices of the respective test and
+        % train set
+        for i=1:nrruns
+            test{i}=find(run==i);  %fprintf('test:'); display(test{i}');
+            train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
+        end;
+        
+        [row,col] = find(prep>0);
+        P={SPM.Vbeta(1:126).fname}';
+        Pselect=[];
+        for i=1:length(col)
+            Pselect{i,1}= P{col(i)};
+        end;
+        
+        tstart = tic
+        lmva_spm(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'),Pselect,out,@prepProd2_combinedclass_corrected4Main,'params',{c,run,train,test});
+        telapsed = toc(tstart)
+    case 'MVA_zValue_suit'
+        
+        s=varargin{1};
+        cd(fullfile(suitDir,subj_name{s}));
+        
+        numTests=6;
+        numCat=4;
+        mu=1/numCat; %mu=0.25;
+        N=numTests*numCat;
+        sigma=sqrt(mu*(1-mu)*1/N);
+        
+        images= {'_accuracy_Comb_160_Mov','_accuracy_Comb_160_Prep','_accuracy_Int_160_Mov','_accuracy_Int_160_Prep'};
+        %         images= {'_accuracy_Comb_160_Mov','_accuracy_Comb_160_Prep'};
+        
+        outimages={'_zacc_Comb_160_Mov','_zacc_Comb_160_Prep','_zacc_Int_160_Mov','_zacc_Int_160_Prep'};
+        %         outimages={'_zacc_Comb_160_Mov','_zacc_Comb_160_Prep'};
+        
+        
+        for j=1:numel(images)
+            input_image= fullfile(suitDir,subj_name{s},[subj_name{s} images{j} '.nii']);
+            output_image= fullfile(suitDir,subj_name{s},[subj_name{s} outimages{j} '.nii']);
+            spmj_imcalc_mtx(input_image, output_image,...
+                sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
+        end;
+    case 'MVA_zValue_oneOut_suit'
+        
+        s=varargin{1};
+        cd(fullfile(suitDir,subj_name{s}));
+        
+        takeOneOutIter=2;
+        numTests=6;
+        numCat=2;
+        mu=1/numCat; %mu=0.5;
+        N=numTests*numCat*takeOneOutIter;
+        sigma=sqrt(mu*(1-mu)*1/N);
+        
+        images= {'_accuracy_Spat_160_Mov','_accuracy_Spat_160_Prep','_accuracy_Temp_160_Mov','_accuracy_Temp_160_Prep'};
+        
+        outimages={'_zacc_Spat_160_Mov','_zacc_Spat_160_Prep','_zacc_Temp_160_Mov','_zacc_Temp_160_Prep'};
+        
+        
+        for j=1:numel(images)
+            input_image= fullfile(suitDir,subj_name{s},[subj_name{s} images{j} '.nii']);
+            output_image= fullfile(suitDir,subj_name{s},[subj_name{s} outimages{j} '.nii']);
+            spmj_imcalc_mtx(input_image, output_image,...
+                sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
+        end;
+    case 'MVA_smooth_suit'
+        
+        s=varargin{1};
+        
+        s=varargin{1};
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Comb_160_Mov.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Comb_160_Mov.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Comb_160_Prep.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Comb_160_Prep.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Spat_160_Mov.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Spat_160_Mov.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Spat_160_Prep.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Spat_160_Prep.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Temp_160_Mov.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Temp_160_Mov.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Temp_160_Prep.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Temp_160_Prep.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Int_160_Mov.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Int_160_Mov.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+        
+        comb=fullfile(suitDir, subj_name{s},[subj_name{s} '_zacc_Int_160_Prep.nii']); %%MVPA smoother
+        scomb=fullfile(suitDir, subj_name{s},[subj_name{s} '_szacc_Int_160_Prep.nii']);
+        spm_smooth(comb,scomb,[4 4 4]); %smooth with 4mm kernel
+    case 'con_smooth_suit'
+        
+        s = varargin{1};
+        
+        con=fullfile(suitDir, subj_name{s},'con_0001.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0001.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+        
+        con=fullfile(suitDir, subj_name{s},'con_0002.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0002.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+        
+        con=fullfile(suitDir, subj_name{s},'con_0003.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0003.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+        
+        con=fullfile(suitDir, subj_name{s},'con_0004.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0004.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+        
+        con=fullfile(suitDir, subj_name{s},'con_0005.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0005.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+        
+        con=fullfile(suitDir, subj_name{s},'con_0006.nii'); %%contrast smoother
+        scon=fullfile(suitDir, subj_name{s},[subj_name{s} '_scon_0006.nii']);
+        spm_smooth(con,scon,[4 4 4]); %smooth with 4mm kernel
+    case 'suit_normalize' %normalise the isolated cerebellum to the suit atlas - produces 'affine_<source>.mat' and 'u_a_<name>.nii'
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/anatomicals/' subj_name{sn}]);
+        disp(['suit_normalizing ' subj_name{sn}])
+        
+        gray = {[subj_name{sn} '_anatomical_seg1.nii']}; %grey and white matter images from previous suit stage
+        white = {[subj_name{sn} '_anatomical_seg2.nii']};
+        isoMask = {['c_' subj_name{sn} '_anatomical_pcereb.nii']}; %isolated cerebellum
+        
+        job.subjND.gray = gray; %put them all into a struct...
+        job.subjND.white = white;
+        job.subjND.isolation = isoMask;
+        
+        suit_normalize_dartel(job) %run the function with the struct as the input
+    case 'suit_normalise' %normalisation into suit space
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/suit/']);
+        
+        if isfolder(suitGroupDir) == 0
+            mkdir(suitGroupDir)
+        end
+        disp(['suit_reslicing ' subj_name{sn}])
+        
+        inDir = [suitDir '/' subj_name{sn} '/']; %path to where data is stored (to be normalised)
+        outDir = suitGroupDir;
+        filenames = {'szacc_Comb_160_Prep', 'szacc_Comb_160_Mov', 'szacc_Spat_160_Prep', 'szacc_Spat_160_Mov', 'szacc_Temp_160_Prep', 'szacc_Temp_160_Mov', 'szacc_Int_160_Prep', 'szacc_Int_160_Mov'};
+        
+        % prepare files for input
+        affine = {[anatDir '/' subj_name{sn} '/' 'Affine_' subj_name{sn} '_anatomical_seg1.mat']};
+        flowfield = {[anatDir '/' subj_name{sn} '/' 'u_a_' subj_name{sn} '_anatomical_seg1.nii']};
+        
+        dataFiles = cell(length(filenames),1); %loop to put all full input file directories into a cell
+        for i=1:length(filenames)
+            dataFiles{i} = [inDir, subj_name{sn}, '_', filenames{i}, '.nii'];
+        end
+        
+        mask = {[anatDir '/' subj_name{sn} '/' 'c_' subj_name{sn} '_anatomical_pcereb.nii']};
+        
+        outFiles = cell(length(filenames),1);
+        for i=1:length(filenames)
+            outFiles{i} = [outDir, '/', filenames{i}, '_', subj_name{sn}, '.nii'];
+        end
+        
+        %% prepare struct for function
+        job.subj.affineTr = affine; %fill job.subj. struct with respective items
+        job.subj.flowfield = flowfield;
+        job.subj.resample = dataFiles;
+        job.subj.mask = mask;
+        job.subj.outname = outFiles;
+        
+        %function
+        suit_reslice_dartel(job)
+    case 'suit_reslice_contrast' %reslice smoothed, normalised, individual contrast maps into SUIT space
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/suit/' subj_name{sn}]);
+        
+        disp(['suit_reslicing_contrast ' subj_name{sn}])
+        
+        inDir = groupDir; %path to where data is stored (to be normalised)
+        
+        contrasts = {'scon_0001', 'scon_0002', 'scon_0003', 'scon_0004', 'scon_0005', 'scon_0006'};
+        
+        outDir = suitGroupDir;
+        
+        % prepare files for input
+        affine = {[anatDir '/' subj_name{sn} '/' 'Affine_' subj_name{sn} '_anatomical_seg1.mat']};
+        flowfield = {[anatDir '/' subj_name{sn} '/' 'u_a_' subj_name{sn} '_anatomical_seg1.nii']};
+        
+        dataFiles = cell(length(contrasts),1);
+        for i=1:length(contrasts)
+            dataFiles{i} = [inDir, '/', contrasts{i}, '_', subj_name{sn} '.nii'];
+        end
+        
+        mask = {[anatDir '/' subj_name{sn} '/' 'c_' subj_name{sn} '_anatomical_pcereb.nii']};
+        
+        outFiles = cell(length(contrasts),1);
+        for i=1:length(contrasts)
+            outFiles{i} = [outDir, '/', contrasts{i}, '_', subj_name{sn}, '.nii'];
+        end
+        
+        %%% prepare struct for function
+        job.subj.affineTr = affine; %fill job.subj. struct with respective items
+        job.subj.flowfield = flowfield;
+        job.subj.resample = dataFiles;
+        job.subj.mask = mask;
+        job.subj.outname = outFiles;
+        
+        %function
+        suit_reslice_dartel(job)
+    case 'glm_contrastGroup_suit'
+        
+        %Produces second-level contrasts. Edit contrast folders, image names, and subject nifti files.
+        
+        dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
+        images = {'scon_0001';'scon_0002';'scon_0003';'scon_0004';'scon_0005';'scon_0006'};
+        
+        subNii = {'_s03.nii','_s05.nii','_s06.nii','_s07.nii','_s09.nii','_s10.nii','_s13.nii','_s16.nii','_s17.nii','_s18.nii','_s20.nii','_s21.nii','_s22.nii','_s25.nii','_s26.nii'...
+            '_s31.nii','_s32.nii','_s34.nii','_s36.nii','_s38.nii','_s39.nii','_s40.nii','_s41.nii','_s42.nii'};
+        contrastN = length(dataDir);
+        images = repmat(images,1,length(subNii));
+        subNii = repmat (subNii,length(dataDir),1);
+        fileName = strcat (images,subNii);  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts, plugging parameters into SPM.
+            glmscndDir = fullfile(suitScndDir, dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (suitGroupDir, fileName(i,:))';  %%Select files from vectors above
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
+            
+            spm_jobman('run',matlabbatch);  %Run SPM
+        end
+    case 'glm_contrastEstimate_suit'
+        
+        dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
+        contrastN = length(dataDir);
+        
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat = fullfile (suitScndDir, dataDir(i), 'SPM.mat');
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+    case 'MVA_group_suit'
+        dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
+        images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep';'szacc_Int_160_Mov';'szacc_Int_160_Prep';'szacc_Spat_160_Mov';'szacc_Spat_160_Prep';'szacc_Temp_160_Mov';'szacc_Temp_160_Prep'};
+        
+        %         dataDir = {'MVA_comb_mov', 'MVA_comb_prep'}; %%just overall decoding
+        %         images = {'szacc_Comb_160_Mov';'szacc_Comb_160_Prep'};
+        
+        %ONLY PARTICIPANTS WHO MODULATED TIMING
+        subNii = {'_s03.nii','_s05.nii','_s06.nii','_s07.nii','_s09.nii','_s10.nii','_s13.nii','_s16.nii','_s17.nii','_s18.nii','_s20.nii','_s21.nii','_s22.nii','_s25.nii','_s26.nii'...
+            '_s31.nii','_s32.nii','_s34.nii','_s36.nii','_s38.nii','_s39.nii','_s40.nii','_s41.nii','_s42.nii'}; %3 5 6 7 9 10 13 16 17 18 20 21 22 25 26 31 32 34 36 38 39 40 41 42
+        
+        %ALL PARTICIPANTS regardless of timing modulation ***TO DO***
+        %         subNii = {'s03.nii','s05.nii','s06.nii','s07.nii','s09.nii','s10.nii','s13.nii','s16.nii','s17.nii','s18.nii','s20.nii','s21.nii','s22.nii','s25.nii','s26.nii'...
+        %             's31.nii','s32.nii','s34.nii','s36.nii','s38.nii','s39.nii','s40.nii','s41.nii'}; %3 4 5 6 7 9 10 11 12 13 15 16 17 18 20 21 22 25 26 31 32 33 34 36 37 38 39 40 41 42
+        
+        contrastN = length(dataDir);
+        images = repmat(images,1,length(subNii));
+        subNii = repmat (subNii,length(dataDir),1);
+        fileName = strcat (images,subNii);  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts
+            glmscndDir = fullfile(suitGroupDir, dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;  %Adjust directory
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (suitGroupDir, fileName(i,:))';  %%Select files from matrix
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+        
+        %AVERAGE GROUP DATA
+        %open spm fmri and select 'imcalc'
+        %choose all images from participants of interest
+        %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+i16+i17+i18+i19+i20+i21+i22+i23+i24)/24
+        %(i1+i2+i3+i4+i5+i6+i7+i8+i9+i10+i11+i12+i13+i14+i15+i16+i17+i18+i19+i20+i21+i22+i23+i24)/24;
+    case 'MVA_estimate_suit'
+        dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
+        %         dataDir = {'MVA_comb_mov', 'MVA_comb_prep'}; %%Save folders for each contrast
+        contrastN = length(dataDir);
+        
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat = fullfile (suitGroupDir, dataDir(i), 'SPM.mat');  %Adjust directory
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Whole brain image reslicing %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 'suit_reslice_whole'
+        
+        sn=varargin{1};
+        cd([baseDir '/imaging/suit/']);
+        
+        %         if isdir([baseDir '/imaging/suit/' subj_name{sn}]) == 0
+        %             mkdir([baseDir '/imaging/suit/' subj_name{sn}])
+        %         end
+        disp(['suit_reslicing ' subj_name{sn}])
+        
+        inDir = [glmDir '/' subj_name{sn} '/']; %path to where data is stored (to be normalised)
+        outDir = [baseDir '/imaging/suit/'];
+        filenames = {'_szacc_Comb_160_Prep.nii', '_szacc_Comb_160_Mov.nii', '_szacc_Spat_160_Prep.nii', '_szacc_Spat_160_Mov.nii', '_szacc_Temp_160_Prep.nii', '_szacc_Temp_160_Mov.nii', '_szacc_Int_160_Prep.nii', '_szacc_Int_160_Mov.nii'};
+        filenamesT = {'spmT_0001.nii', 'spmT_0002.nii', 'spmT_0003.nii', 'spmT_0004.nii', 'spmT_0005.nii', 'spmT_0006.nii'};
+        
+        %% prepare files for input
+        affine = {[anatDir '/' subj_name{sn} '/' 'Affine_' subj_name{sn} '_anatomical_seg1.mat']};
+        flowfield = {[anatDir '/' subj_name{sn} '/' 'u_a_' subj_name{sn} '_anatomical_seg1.nii']};
+        
+        dataFiles = cell(length(filenames),1); %separate loops to fill filenames for classifiers and T contrast maps
+        for i=1:length(filenames)
+            dataFiles{i} = [inDir, subj_name{sn}, filenames{i}];
+        end
+        dataFilesT = cell(length(filenamesT),1);
+        for i=1:length(filenamesT)
+            dataFilesT{i} = [inDir, filenamesT{i}];
+        end
+        dataFiles = [dataFiles; dataFilesT];
+        
+        mask = {[anatDir '/' subj_name{sn} '/' 'c_' subj_name{sn} '_anatomical_pcereb.nii']};
+        
+        outFiles = cell(length(filenames),1);
+        for i=1:length(filenames)
+            outFiles{i} = [outDir, '/', subj_name{sn}, filenames{i}];
+        end
+        outFilesT = cell(length(filenamesT),1);
+        for i=1:length(filenamesT)
+            outFilesT{i} = [outDir, '/', subj_name{sn}, '_' filenamesT{i}];
+        end
+        outFiles = [outFiles; outFilesT];
+        
+        %% prepare struct for function
+        job.subj.affineTr = affine; %fill job.subj. struct with respective items
+        job.subj.flowfield = flowfield;
+        job.subj.resample = dataFiles;
+        job.subj.mask = mask;
+        job.subj.outname = outFiles;
+        
+        %function
+        suit_reslice_dartel(job)
+    case 'suit_group_whole'
+        
+        %% Produces second-level contrasts. Edit contrast folders, image names, and subject nifti files.
+        
+        dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
+        images = {'_spmT_0001.nii';'_spmT_0002.nii';'_spmT_0003.nii';'_spmT_0004.nii';'_spmT_0005.nii';'_spmT_0006.nii'};
+        
+        %         dataDir = {'Mov','Prep','Points'}; %%Save folders for each contrast
+        %         images = {'scon_0001';'scon_0002';'scon_0006'};
+        
+        %         dataDir = {'Prep'}; %%Save folders for each contrast
+        %         images = {'scon_0002'};
+        
+        subNii = {'s03','s04','s05','s06','s07','s09','s10','s11'};
+        contrastN = length(dataDir);
+        images = repmat(images,1,length(subNii));
+        subNii = repmat (subNii,length(dataDir),1);
+        fileName = strcat (subNii, images);  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts, plugging parameters into SPM.
+            glmscndDir = fullfile(suitDir, 'data', dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (suitDir, fileName(i,:))';  %%Select files from vectors above
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
+            
+            spm_jobman('run',matlabbatch);  %Run SPM
+        end
+        
+        %% Produces second level MVPA accuracy maps. Edit folders, image names, and subject nifti files.
+        dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
+        images = {'_szacc_Comb_160_Mov.nii';'_szacc_Comb_160_Prep.nii';'_szacc_Int_160_Mov.nii';'_szacc_Int_160_Prep.nii';'_szacc_Spat_160_Mov.nii';'_szacc_Spat_160_Prep.nii';'_szacc_Temp_160_Mov.nii';'_szacc_Temp_160_Prep.nii'};
+        %         subNii = {'_s01.nii','_s02.nii','_s03.nii','_s05.nii','_s06.nii','_s07.nii','_s08.nii','_s09.nii','_s10.nii'};
+        subNii = {'s03','s04','s05','s06','s07','s09','s10','s11'};
+        contrastN = length(dataDir);
+        images = repmat(images,1,length(subNii));
+        subNii = repmat (subNii,length(dataDir),1);
+        fileName = strcat (subNii, images);  %%Concatenate contrast files and subject names
+        
+        for i=1:contrastN  %%Loop across contrasts
+            glmscndDir = fullfile(suitDir, dataDir(i));
+            matlabbatch{1}.spm.stats.factorial_design.dir = glmscndDir;  %Adjust directory
+            matlabbatch{1}.spm.stats.factorial_design.des.t1.scans = fullfile (suitDir, fileName(i,:))';  %%Select files from matrix
+            matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'iCFI', {}, 'iCC', {});
+            matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.im = 1;
+            matlabbatch{1}.spm.stats.factorial_design.masking.em = {''};
+            matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.gmsca.gmsca_no = 1;
+            matlabbatch{1}.spm.stats.factorial_design.globalm.glonorm = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+    case 'suit_estimate_whole'
+        
+        %%Contrast
+        dataDir = {'Mov', 'Prep', 'Error', 'PrepProd', 'ProdPrep', 'Rest'}; %%Save folders for each contrast
+        contrastN = length(dataDir);
+        
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat = fullfile (suitDir, 'data', dataDir(i), 'SPM.mat');
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+        
+        %% MVPA
+        dataDir = {'MVA_comb_mov', 'MVA_comb_prep', 'MVA_int_mov', 'MVA_int_prep', 'MVA_spat_mov', 'MVA_spat_prep','MVA_temp_mov','MVA_temp_prep'}; %%Save folders for each contrast
+        contrastN = length(dataDir);
+        
+        for i=1:contrastN
+            matlabbatch{1}.spm.stats.fmri_est.spmmat = fullfile (suitDir, dataDir(i), 'SPM.mat');  %Adjust directory
+            matlabbatch{1}.spm.stats.fmri_est.write_residuals = 0;
+            matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
+            
+            spm_jobman('run',matlabbatch);
+        end
+    case 'suit_surface_map_whole'
+        
+        %MANUALLY OPEN RESULTS IN SPM FIRST
+        % % SPM -> Results -> suit -> second level folders (contrasts under 'data', MVPA in individual folders.
+        dataFolder = {'data/Mov','data/Prep','data/PrepProd','data/ProdPrep','data/Error','data/Rest',... %folders containing data to be projected
+            'MVA_comb_mov','MVA_comb_prep','MVA_spat_mov','MVA_spat_prep','MVA_temp_mov','MVA_temp_prep','MVA_int_mov','MVA_int_prep'};
+        
+        for i =1:length(dataFolder)
+            cd([suitDir, '/', dataFolder{i}]) %go into folder location for data and to save into.
+            
+            flatmapVector = suit_map2surf('spmT_0001.nii'); %produces vector information regarding flatmap
+            flatmapGifti = gifti(flatmapVector); %convert to gifti format (compatibility with connectome workbench)
+            save(flatmapGifti,'spmT_0001.func.gii')
+            save('spmT_0001_flatmap.mat','flatmapVector')
+        end
+        
+        %% for within-matlab visualisation of flatmap, load respective 'spmT_0001_flatmap.mat'
+        % then use suit_plotflatmap(flatmapVector, 'cmap', hot, 'cscale', [0 7.00], 'threshold', 3.48) replacing numbers with desired values.
+    case 'suit_roi_whole'
+        
+        dataFolder = {'data/Mov','data/Prep','data/PrepProd','data/ProdPrep','data/Error','data/Rest',... %folders containing data to be projected
+            'MVA_comb_mov','MVA_comb_prep','MVA_spat_mov','MVA_spat_prep','MVA_temp_mov','MVA_temp_prep','MVA_int_mov','MVA_int_prep'};
+        
+        dataNames = {'Mov','Prep','PrepProd','ProdPrep','Error','Rest',... %names for saving
+            'MVA_comb_mov','MVA_comb_prep','MVA_spat_mov','MVA_spat_prep','MVA_temp_mov','MVA_temp_prep','MVA_int_mov','MVA_int_prep'};
+        
+        for i =1:length(dataFolder)
+            
+            cd([suitDir, '/', dataFolder{i}]) %go into folder location for data.
+            saveDir = [suitDir, '/', 'RoI', '/', dataNames{i}, '.txt'];
+            filename = {'spmT_0001.nii'};
+            
+            suit_ROI_summarize(filename, 'outfilename', saveDir) %For definitions of RoIs using standard atlas visit http://www.diedrichsenlab.org/imaging/mdtb.htm
+            
+        end
+        
+        
     case 'make_mask_subcorticalSearch'  %SUBCORTICAL SEARCHLIGHT ANALYSIS - Makes restricted analysis mask for MVA
         
         s=varargin{1};
@@ -4929,6 +5784,560 @@ switch(ana)
             
             
         end
+    case 'cerebellum_run_search_integrated' %runs the searchlight, but subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY) within searchlight function
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Searchlight file
+        load(fullfile(suitDir,subj_name{s},'volsearch160SUIT.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
+            end
+        end
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_cor4main_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All_integrated'], 'outDir', fullfile(suitDir, subj_name{s}))
+    case 'cerebellum_calc_dissimilarity_maps_integrated' %extract integrated prep, prod, cross from RSA_ALL_integrated_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %Int prep, Int prod, int cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(suitDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            'orderInt_prep',                                'orderInt_prod',                                'orderInt_cross', ...
+            'timingInt_prep',                               'timingInt_prod',                               'timingInt_cross';...
+            prepCols == 1,     prodCols == 1,     crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0,    prodCols == 1 & ordDiff == 1 & timDiff == 0,    crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0,    prodCols == 1 & timDiff == 1 & ordDiff == 0,    crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
+            
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+        
+    case 'subcortical_calculateRDMs_integrated'
+        %subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY)
+        
+        cd(roiSubDir)
+        R = load('preWhitened_betas.mat');
+        nrruns = length(run); nCond = 8;
+        saveDir = fullfile(rsaDir, 'subcortical');
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        partVec = double(condVec > 0); %assign run number to beta
+        for i=1:nCond %assign run numbers to conds, ignore no-interest betas
+            partIdx = find(condVec == i);
+            for j=1:length(run)
+                partVec(partIdx(j)) = j;
+            end
+        end
+        
+        %%% loop through prewhitened data, calculate crossnobis dissimilarities
+        %pre-allocate output variables
+        R.d   = NaN(length(R.SN), nCond * (nCond - 1) / 2); %pairwise distance measures
+        R.Sig = cell(length(R.SN), 1); %covariance matrix of the beta estimates across different imaging runs.
+        R.G   = cell(length(R.SN), 1); %second moment matrix
+        R.matrix = cell(length(R.SN), 1); % Pairwise contrast matrix
+        
+        for s = anaSubj
+            load(fullfile(glmDir, subj_name{s}, 'SPM'), 'SPM') %load SPM design matrix for distance function
+            for r = unique(R.region)'
+                B = R.betaW{R.region == r & R.SN == s};
+                
+                [d, Sig] = rsa.distanceLDC_cor4main_RY(B, partVec, condVec, SPM.xX.X); %integrated function
+                [G,~]    = pcm_estGCrossval(B,partVec,condVec, 'X', SPM.xX.X);
+                matrix   = indicatorMatrix('allpairs',1:nCond); % Pairwise contrast matrix
+                
+                R.d     (R.region == r & R.SN == s, :) = d;
+                R.Sig   {R.region == r & R.SN == s}    = Sig;
+                R.G     {R.region == r & R.SN == s}    = G;
+                R.matrix{R.region == r & R.SN == s}    = matrix;
+            end
+        end
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        orderDiff      = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0];   %pairwise contrast index (1s are where orders are different)
+        timingDiff     = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1];   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0];   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1];   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0];   %^ index (1s are contrasts across phases)
+        
+        for i=1:length(R.d)
+            
+            R.dOrderPrepInt(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prepCols == 1);
+            R.dOrderProdInt(i,:)  = R.d(i, orderDiff == 1 & timingDiff == 0 & prodCols == 1);
+            R.dOrderCrossInt(i,:) = R.d(i, orderDiff == 1 & timingDiff == 0 & crossPhaseCols == 1);
+            R.dOrderAllInt(i,:)   = R.d(i, orderDiff == 1 & timingDiff == 0);
+            
+            R.dTimingPrepInt(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prepCols == 1);
+            R.dTimingProdInt(i,:)  = R.d(i, timingDiff == 1 & orderDiff == 0 & prodCols == 1);
+            R.dTimingCrossInt(i,:) = R.d(i, timingDiff == 1 & orderDiff == 0 & crossPhaseCols == 1);
+            R.dTimingAllInt(i,:)   = R.d(i, timingDiff == 1 & orderDiff == 0);
+            
+            R.dIntegratedPrep(i,:)  = R.d(i, prepCols == 1);
+            R.dIntegratedProd(i,:)  = R.d(i, prodCols == 1);
+            R.dIntegratedCross(i,:) = R.d(i, crossPhaseCols == 1);
+        end
+        
+        if ~isfolder(saveDir)
+            mkdir(saveDir)
+        end
+        
+        save(fullfile(saveDir, 'subRoiDistances_integrated.mat'), 'R')
+    case 'subcortical_plotRDMs'
+        subcortStructs = subcortStructs(2,:);%names from second row
+        subcortStructs = strrep(subcortStructs, '_', ' '); %replace _ with space
+        concatFile = fullfile(rsaDir, 'subcortical', 'subRoiDistancesAll.mat'); %file with all region distances
+        
+        if ~exist(concatFile, 'file')
+            load(fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat'), 'R');
+            Rovr = R;
+            load(fullfile(rsaDir, 'subcortical', 'subRoiDistances_integrated.mat'), 'R');
+            Rint = R;
+            
+            conds = {...
+                'dOverallPrep',    'dOverallProd',    'dOverallCross', ...%variable name
+                'dOrderPrep',      'dOrderProd',      'dOrderCross', ...
+                'dTimingPrep',     'dTimingProd',     'dTimingCross';...
+                1,                 1,                 1, ...%overall/order/timing - cond
+                2,                 2,                 2, ...
+                3,                 3,                 3; ...
+                1,                 2,                 3, ...%prep/prod/cross - phase
+                1,                 2,                 3, ...
+                1,                 2,                 3, ...
+                };
+            condsInt = {...
+                'dIntegratedPrep', 'dIntegratedProd', 'dIntegratedCross';...
+                4,                 4,                 4; ...%integrated - cond
+                1,                 2,                 3, ...%prep/prod/cross - phase
+                };
+            nConds = length(conds);
+            nCondsInt = length(condsInt);
+            
+            A = [];
+            
+            for i=1:nConds%for factorial conds
+                Atemp.SN     = Rovr.SN;
+                Atemp.region = Rovr.region;
+                Atemp.dist   = mean(Rovr.(conds{1, i}), 2);%mean of relevant pairwise distances
+                Atemp.cond   = ones(length(Atemp.dist), 1) * conds{2, i};
+                Atemp.phase  = ones(length(Atemp.dist), 1) * conds{3, i};
+                
+                A = addstruct(A, Atemp);
+                clear Atemp
+            end%for factorial conds
+            for i=1:nCondsInt%for int conds
+                Atemp.SN     = Rint.SN;
+                Atemp.region = Rint.region;
+                Atemp.dist   = mean(Rint.(condsInt{1, i}), 2);%mean of relevant pairwise distances
+                Atemp.cond   = ones(length(Atemp.dist), 1) * condsInt{2, i};
+                Atemp.phase  = ones(length(Atemp.dist), 1) * condsInt{3, i};
+                
+                A = addstruct(A, Atemp);
+                clear Atemp
+            end%for int conds
+            
+            save(fullfile(rsaDir, 'subcortical', 'subRoiDistancesAll.mat'), 'A');
+        else
+            load(concatFile, 'A')%if it exists, load it
+        end
+        
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(A,{'SN', 'region', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'});
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        regions = repmat({'l thal', 'l caud', 'l put', 'l pal', 'l hip', 'r thal', 'r caud', 'r put', 'r pal', 'r hip'}, 1, 12);
+        barplot([T.phase, T.cond, T.region], T.dist, 'split', T.cond, 'facecolor', colour)
+        ylim([-0.0017 0.022])
+        set(gca,'xticklabel',regions)
+        ylabel('Crossnobis dissimilarity')
+        title('Overview')
+        %-------------------------------------------------------------------------------%
+        
+        for i=1:length(subcortStructs)
+            figure %%% Region plots for prep/prod order/timing/integrated
+            T = tapply(A,{'SN', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', A.region == i & A.cond > 1 & A.phase < 3);
+            colour={[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+            lineplot([T.phase], T.dist, 'split', T.cond, ...
+                'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
+                'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour)
+            ylim([-0.0018 0.0055])
+            drawline(0, 'dir', 'horz', 'linestyle', '- -')
+            ylabel('Crossnobis dissimilarity')
+            set(gca,'xticklabel',{'Prep', 'Prod'})
+            title(subcortStructs{i})
+        end
+        %-------------------------------------------------------------------------------%
+        
+        figure %%% Investigate cross-phase distances
+        T = tapply(A,{'SN', 'region', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', A.cond == 1 & A.phase == 3);
+        %colour={[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        regions = repmat({'l thal', 'l caud', 'l put', 'l pal', 'l hip', 'r thal', 'r caud', 'r put', 'r pal', 'r hip'}, 1, 12);
+        barplot([T.phase, T.cond, T.region], T.dist, 'split', T.cond) %'facecolor', colour)
+        ylim([0 0.022])
+        set(gca,'xticklabel',regions)
+        ylabel('Crossnobis dissimilarity')
+        title('Cross-phase')
+        
+    case 'cortical_run_search_integrated' %runs the distance searchlight, but subtracts averaged order and timing patterns within runs
+        %subtraction happens during distance function
+        %(distanceLDC_cor4main_RY) within searchlight function
+        
+        s=varargin{1}; blueBear=varargin{2};
+        nrruns = length(run);
+        
+        cd(fullfile(rsaDir, 'cortical', subj_name{s}))
+        
+        %%% Searchlight file
+        load(fullfile(glmDir,subj_name{s},'volsearch160RSA.mat'), 'L');
+        
+        %%% SPM file
+        spmDir = fullfile(glmDir, subj_name{s});
+        load(fullfile(spmDir, 'SPM'), 'SPM');
+        
+        %replace fnames for bluebear compatibility
+        if blueBear == 1
+            for i=1:length(SPM.xY.VY)
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'\','/');
+                SPM.xY.VY(i).fname = strrep(SPM.xY.VY(i).fname,'Z:','/rds/projects/k/kornyshk-kornyshevalab');
+            end
+        end
+        
+        %%% prepare condition and partition (run) vectors
+        runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
+        prep      =[0 0 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0 0 0]; %prep
+        prep=[repmat(prep,1,nrruns) runBSL];%1 x nBeta, 1 2 3 4 = prep sequences 1:4
+        
+        prod      =[5 0 0 0 6 0 0 0 7 0 0 0 8 0 0 0 0 0 0 0]; %prod
+        prod=[repmat(prod,1,nrruns) runBSL];%1 x nBeta, 5 6 7 8 = prod sequences 1:4
+        
+        condVec = prep + prod; condVec = condVec'; % conditions, including no interest regressors as 0
+        
+        %%% Run searchlight function on whole CB
+        rsa.runSearchlightLDC_cor4main_RY(L, SPM, 'spmDir', spmDir, 'conditionVec', condVec, ...
+            'analysisName', [subj_name{s}, 'RSA_All_integrated'], 'outDir', fullfile(rsaDir, 'cortical', subj_name{s}))
+    case 'cortical_calc_dissimilarity_maps_integrated' %extract integrated prep, prod, cross from RSA_ALL_integrated_sLDC.nii
+        %each volume of the searchlight corresponds to a pairwise
+        %dissimilarity measure between sequences. So here we average within
+        %our conditions to give us dissimilarity measures for:
+        %Int prep, Int prod, int cross, order prep, order prod,
+        %order cross, timing prep, timing prod, timing cross
+        
+        s=varargin{1};
+        cd(fullfile(rsaCorticalDir, subj_name{s}))
+        
+        %%% Identify and extract values for overall, order, and timing
+        %%% within preparation, production, and cross-phase
+        ordDiff        = [0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0]';   %pairwise contrast index (1s are where orders are different)
+        timDiff        = [1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1]';   %^ index (1s are where timings are different)
+        prepCols       = [1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]';   %^ index (1s are contrasts within preparation)
+        prodCols       = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1]';   %^ index (1s are contrasts within production)
+        crossPhaseCols = [0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0]';   %^ index (1s are contrasts across phases)
+        
+        conds = {...
+            'integrated_prep', 'integrated_prod', 'integrated_cross', ...
+            'orderInt_prep',                                'orderInt_prod',                                'orderInt_cross', ...
+            'timingInt_prep',                               'timingInt_prod',                               'timingInt_cross';...
+            prepCols == 1,     prodCols == 1,     crossPhaseCols == 1, ...
+            prepCols == 1 & ordDiff == 1 & timDiff == 0,    prodCols == 1 & ordDiff == 1 & timDiff == 0,    crossPhaseCols == 1 & ordDiff == 1 & timDiff == 0, ...
+            prepCols == 1 & timDiff == 1 & ordDiff == 0,    prodCols == 1 & timDiff == 1 & ordDiff == 0,    crossPhaseCols == 1 & timDiff == 1 & ordDiff == 0 ...
+            };
+        
+        for j=1:length(conds)
+            vol = spm_vol([subj_name{s} 'RSA_ALL_integrated_sLDC.nii']);
+            
+            Vi = vol(conds{2,j}, :);
+            Vo = Vi(1); Vo = rmfield(Vo, 'pinfo');
+            Vo.fname = [subj_name{s} '_LDC_' conds{1,j} '.nii'];
+            Vo.n = [1 1];
+            express = 'mean(X)';
+            flags.dmtx = 1;
+            
+            spm_imcalc(Vi, Vo, express, flags)
+        end
+        
+    case 'simulations_RSA_LDA' %includes factorial distance measures (that we ended up dropping)
+        
+        %%%Prepare variables
+        prepProd = 1;
+        vord     = [0.3 0.1];
+        vtemp    = [0.4 0.7];
+        vinter   = [0.6 0.8];
+        vnoise   = 0.5;
+        nIter    = 500;%acts as subj number
+        
+        vararginoptions(varargin,{'prepProd','vord','vtemp','vinter','vnoise','nIter','sn'});
+        A=[]; %data struct
+        B=[]; %output struct - stores distances, LDA, G matrix
+        D=[]; %raw data store
+        
+        %%%Prepare condition and partition (run) vectors
+        nrruns = 6; nCond = 8;
+        runC      = repmat(1:nrruns,nCond,1); %labelling runs 1:6 (imaging runs)
+        runC      = reshape(runC,1,[])';
+        condC     = repmat((1:nCond)', nrruns, 1); %labelling conditions 1:4 (sequences)
+        condCOrd  = repmat([1 1 2 2 3 3 4 4]', 6, 1);
+        condCTemp = repmat([1 2 1 2 3 4 3 4]', 6, 1);
+        
+        %%%Generate data
+        for i=1:nIter %for 'subject' n
+            %make the data based on input specifications
+            Y=prepProdSimu_makedataPP('prepProd',prepProd,'vord',vord,'vtemp',vtemp,'vinter',vinter,'vnoise',vnoise);
+            
+            A.data{i} = Y;
+            
+            %%%Generate distances vector
+            [A.d{i},     A.Sig{i}]     = rsa.distanceLDC(A.data{i}, runC, condC);
+            [A.dOrd{i},  A.SigOrd{i}]  = rsa.distanceLDC_oneOut_RY(A.data{i}, runC, condC, condCOrd);
+            [A.dTemp{i}, A.SigTemp{i}] = rsa.distanceLDC_oneOut_RY(A.data{i}, runC, condC, condCTemp);
+            [A.dInt{i},  A.SigInt{i}]  = rsa.distanceLDC_cor4main_RY(A.data{i}, runC, condC);
+            
+            %%%Run linear decoding
+            prepData = [A.data{i}(1:4,:); A.data{i}(9:12,:);  A.data{i}(17:20,:); A.data{i}(25:28,:); A.data{i}(33:36,:); A.data{i}(41:44,:)];
+            prodData = [A.data{i}(5:8,:); A.data{i}(13:16,:); A.data{i}(21:24,:); A.data{i}(29:32,:); A.data{i}(37:40,:); A.data{i}(45:48,:)];
+            
+            %               accuracy columns
+            %1: overall,        2: order,          3: timing,         4:integrated(Z)    5: integrated(acc) for debugging
+            [prepAccuracy(i,1), prepAccuracy(i,2), prepAccuracy(i,3), prepAccuracy(i,4), prepAccuracy(i,5)]=prepProdSimu_classify(prepData);
+            [prodAccuracy(i,1), prodAccuracy(i,2), prodAccuracy(i,3), prodAccuracy(i,4), prodAccuracy(i,5)]=prepProdSimu_classify(prodData);
+        end%for subject n
+        
+        % Identify and extract values for overall, order, and timing
+        % within preparation, production, and cross-phase
+        diffVectorOvr  = [... %index (1s are where condition is different)
+            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1; ...%overall
+            ];
+        %0 1 1 0 0 1 1 1 1 0 0 1 1 0 1 1 0 0 1 1 0 0 0 1 1 1 1 0; ...%order
+        %1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 1 0 1; ...%timing
+        %0 0 1 0 0 0 1 1 0 0 0 1 0 0 0 1 0 0 1 0 0 0 0 0 1 1 0 0; ...%integrated
+        
+        %diffVector  = [...
+        %diffVector(1,:); ...%overall stays the same
+        %diffVector(2,:) == 1 & diffVector(3,:) == 0; ...%ONLY sequences with diff order & SAME timing
+        %diffVector(3,:) == 1 & diffVector(2,:) == 0; ...%vice versa as above
+        %diffVector(4,:); ...%integrated stays the same
+        %];
+        %diffVectorInt = [...
+        %1 1 0 0 1 1 0 0 1 1 0 0 1 1 1 0 0 1 0 1 1 0 1 1 0 0 1 1; ...%integrated
+        %];
+        phaseVector = [...%index (1s are where phase is different)
+            1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; ...%prep
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1; ...%prod
+            0 0 0 1 1 1 1 0 0 1 1 1 1 0 1 1 1 1 1 1 1 1 0 0 0 0 0 0  ...%cross
+            ];
+        phaseVectorOneOut = [...
+            1 0 0 0 0 0; ...%prep
+            0 0 0 0 0 1; ...%prod
+            0 1 1 1 1 0; ...%cross
+            ];
+        
+        %%%Loop over subjs, conditions, and phases, and store distances as
+        %%%struct to plot later
+        loopCounter = 1;
+        
+        %%% Overall
+        for s=1:nIter%for subj
+            for i=1:size(phaseVector, 1)%for phase
+                for j=1:size(diffVectorOvr, 1)%for conds
+                    B.dist(loopCounter,1)  = mean(A.d{s}(phaseVector(i,:) & diffVectorOvr(j,:)));
+                    B.phase(loopCounter,1) = i;
+                    B.cond(loopCounter,1)  = j;
+                    B.sn(loopCounter,1)    = s;
+                    loopCounter = loopCounter + 1;
+                end%for conds
+            end%for phase
+        end%for subj
+        
+        %%% Order and timing
+        for s=1:nIter%for subj
+            for i=1:size(phaseVectorOneOut, 1)%for phase
+                B.dist(loopCounter,1)  = mean(A.dOrd{s}(phaseVectorOneOut(i,:) == 1));
+                B.phase(loopCounter,1) = i;
+                B.cond(loopCounter,1)  = 2;
+                B.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+                B.dist(loopCounter,1)  = mean(A.dTemp{s}(phaseVectorOneOut(i,:) == 1));
+                B.phase(loopCounter,1) = i;
+                B.cond(loopCounter,1)  = 3;
+                B.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end%for phase
+        end%for subj
+        
+        %%% Integrated
+        for s=1:nIter%for subj
+            for i=1:size(phaseVector, 1)%for phase
+                B.dist(loopCounter,1)  = mean(A.dInt{s}(phaseVector(i,:) & diffVectorOvr(1,:)));
+                B.phase(loopCounter,1) = i;
+                B.cond(loopCounter,1)  = 4;
+                B.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end%for phase
+        end%for subj
+        
+        loopCounter = 1;
+        for s=1:nIter%for subj
+            for i=1:size(prepAccuracy, 2)
+                C.acc(loopCounter,1)   = prepAccuracy(s, i);
+                C.phase(loopCounter,1) = 1;
+                C.cond(loopCounter,1)  = i;
+                C.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end
+        end%for subj
+        
+        for s=1:nIter%for subj
+            for i=1:size(prodAccuracy, 2)
+                C.acc(loopCounter,1)   = prodAccuracy(s, i);
+                C.phase(loopCounter,1) = 2;
+                C.cond(loopCounter,1)  = i;
+                C.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
+            end
+        end%for subj
+        
+        
+        
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(B,{'sn', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset', B.phase < 3);
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        barplot([T.phase, T.cond], T.dist, 'split', T.cond, 'facecolor', colour)
+        ylabel('Crossnobis dissimilarity')
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        %-------------------------------------------------------------------------------%
+        
+        figure %%% General overview (zoom to regions of interest)
+        T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'});
+        colour={[0 0 0], [0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        barplot([T.phase, T.cond], T.acc, 'split', T.cond, 'facecolor', colour)
+        ylabel('Decoding accuracy (Z)')
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        %-------------------------------------------------------------------------------%
+        
+        labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
+        
+        %%%Multi-dimensional scaling - RDM
+        for s=1:length(A.data)%for iter
+            d_hat(:,:,s)= squareform(A.d{s}); %calc representational dissimilarity matrix
+        end%forIter
+        dm = mean(d_hat,3); % Mean estimate
+        
+        figure
+        %subplot(1,2,1);
+        H = eye(8)-ones(8)/8;
+        imagesc(H*dm*H');
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        xticks(1:8)
+        xticklabels(labels);%p=prep, P=prod
+        yticks(1:8)
+        yticklabels(labels)
+        
+        % %%% Multi-dimensional scaling
+        try
+            RDMs.RDM   = dm;
+            RDMs.name  = 'simulation';
+            RDMs.color = [0 0 1];
+            
+            userOptions = prepProdSimuPP_defineUserOptions(baseDir);
+            
+            rsa.MDSConditions(RDMs, userOptions);
+        catch
+            disp('MDS Failed.')
+        end
+        %----------------------------------------------------------------------------------------------%
+        
+        %%%Multi-dimensional scaling - RDM
+        for s=1:length(A.data)%for iter
+            d_hatInt(:,:,s)= squareform(A.dInt{s}); %calc representational dissimilarity matrix
+        end%forIter
+        dmInt = mean(d_hatInt,3); % Mean estimate
+        
+        figure
+        %subplot(1,2,1);
+        H = eye(8)-ones(8)/8;
+        imagesc(H*dmInt*H');
+        title('Corrected for main (Integrated)');
+        xticks(1:8)
+        xticklabels(labels);%p=prep, P=prod
+        yticks(1:8)
+        yticklabels(labels)
+        
+        % %%% Multi-dimensional scaling
+        try
+            RDMsInt.RDM   = dmInt;
+            RDMsInt.name  = 'simulation_integrated';
+            RDMsInt.color = [0 0 1];
+            
+            userOptions = prepProdSimuPP_defineUserOptions;
+            
+            rsa.MDSConditions(RDMsInt, userOptions);
+        catch
+            disp('MDS Failed.')
+        end
+        
+        T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', C.phase == 1);
+        barplot(T.cond,T.acc,'split',T.cond,'style_bold','leg',{'ovr', 'ord', 'temp' ,'inter'},'leglocation','north');
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        ylabel('acc');
+        xlabel('factor');
+        
+        
 end%switch
 end%function prepProd2_obsolete
 

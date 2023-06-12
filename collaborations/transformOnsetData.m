@@ -115,6 +115,6 @@ for i=unique(OnsetData.run)' %sort onset times within runs
     OnsetData(OnsetData.run == i, 1:5) = sortrows(OnsetData(OnsetData.run == i, 1:5), 4);
 end%for run
 
-save(fullfile(saveDir, ['onsetData_' subj_name{sn}]), 'OnsetData')
+save(fullfile(saveDir, ['onsetData_' subj_name{anaSn}]), 'OnsetData')
 cd(saveDir);
 end
