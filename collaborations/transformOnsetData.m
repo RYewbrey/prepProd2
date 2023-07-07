@@ -13,11 +13,11 @@ cd(baseDir)
 load(fullfile('imaging', 'GLM_firstlevel', subj_name{anaSn}, 'SPM.mat'), 'SPM')
 
 %output must be trialN x 5 table containing:
-run = [];      % - run number
-cond = [];     % - regressor name (string)
-para = [];     % - press number for prod trials
-onsetSec = []; % - onset in seconds relative to run start
-dur = [];      % - duration of regressor
+%run       - run number
+%cond      - regressor name (string)
+%para      - press number for prod trials
+%onsetSec  - onset in seconds relative to run start
+%dur       - duration of regressor
 
 OnsetData = []; %output variable, table
 
@@ -60,10 +60,10 @@ prodOnsetSec = reshape(prodOnsetSec', [], 1);
 prodDur      = zeros(length(prodOnsetSec), 1);
 
 %%%Preparation trial regressors
-prepRun = prodRun;
+prepRun      = prodRun;
 prepOnsetSec = nan(size(A.timing));
 prepOnsetSec(isnan(A.timing(:,1))) = (A.tZero(isnan(A.timing(:,1)))) / 1000;
-prepCond = cell(length(prepOnsetSec), 1);
+prepCond    = cell(length(prepOnsetSec), 1);
 prepCondIdx = nan(length(prepOnsetSec), 1);
 prepCondIdx(isnan(A.timing(:,1))) = A.seqID(isnan(A.timing(:,1)));
 for i=find(isnan(A.timing(:,1)))'
@@ -98,12 +98,23 @@ prepInProdRun  = prodRun;
 prepInProdCond = repmat({'Prep in prod'}, length(prepInProdOnsetSec), 1);
 prepInProdPara = prepPara;
 
+%%%Feedback in every trial
+feedbackOnsetSec      = nan(size(A.timing));
+feedbackOnsetSec(:,1) = (A.tZero + A.goCueDur + A.crossDur + A.feedbackCalcDur) / 1000;
+feedbackOnsetSec      = reshape(feedbackOnsetSec', [], 1);
+feedbackDur      = nan(size(A.timing));
+feedbackDur(:,1) = A.feedback;
+feedbackDur      = reshape(feedbackDur', [], 1);
+feedbackRun = prodRun;
+feedbackCond = repmat({'feedback'}, length(feedbackOnsetSec), 1);
+feedbackPara = nan(length(feedbackOnsetSec), 1);
+
 %%%Concatenate all variables across regressors
-run      = vertcat(prepRun, prodRun, prepInProdRun, errorRun);                     % - run number
-cond     = vertcat(prepCond, prodCond, prepInProdCond, errorCond);                 % - regressor name (string)
-para     = vertcat(prepPara, prodPara, prepInProdPara, errorPara);                 % - press number for prod trials
-onsetSec = vertcat(prepOnsetSec, prodOnsetSec, prepInProdOnsetSec, errorOnsetSec); % - onset in seconds relative to run start
-dur      = vertcat(prepDur, prodDur, prepInProdDur, errorDur);                     % - duration of regressor
+run      = vertcat(prepRun, prodRun, prepInProdRun, errorRun, feedbackRun);                          % - run number
+cond     = vertcat(prepCond, prodCond, prepInProdCond, errorCond, feedbackCond);                     % - regressor name (string)
+para     = vertcat(prepPara, prodPara, prepInProdPara, errorPara, feedbackPara);                     % - press number for prod trials
+onsetSec = vertcat(prepOnsetSec, prodOnsetSec, prepInProdOnsetSec, errorOnsetSec, feedbackOnsetSec); % - onset in seconds relative to run start
+dur      = vertcat(prepDur, prodDur, prepInProdDur, errorDur, feedbackDur);                          % - duration of regressor
 
 OnsetDataTemp = table(run, cond, para, onsetSec, dur);
 
