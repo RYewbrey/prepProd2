@@ -14,6 +14,7 @@ subj=[3,5,6,7,9,10,13,16,17,18,20,21,22,25,26,31,32,34,36,38,39,40,41,42]; %Ps t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp(['Analysing: ' num2str(subj)])
+disp(['Subj N = ' num2str(length(subj))])
 
 % parfor i=1:numel(subj)
 %     disp('Subj#'); disp(subjName{subj(i)});
@@ -64,52 +65,74 @@ disp(['Analysing: ' num2str(subj)])
 
 
 %%%%%%%%%%%%%% SUBCORTICAL ANALYSIS %%%%%%%%%%%%%%
-parfor i=1:numel(subj)
-    disp(['RSA Subcortical Analysis: ' subjName{subj(i)}])
-%     prepProd2_imana_RY('subcortical_make_nii',subj(i))
-%     prepProd2_imana_RY('subcortical_make_structs',subj(i))
-%     prepProd2_imana_RY('subcortical_reslice_structs',subj(i))
-%     prepProd2_imana_RY('subcortical_make_mask',subj(i))
-%     prepProd2_imana_RY('subcortical_make_ROIs',subj(i))
-%     prepProd2_imana_RY('subcortical_make_search',subj(i))
-    
-%     prepProd2_imana_RY('subcortical_run_search_RSA',subj(i),1)
-%     prepProd2_imana_RY('subcortical_run_spatMov_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_run_spatPrep_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_run_tempMov_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_run_tempPrep_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_run_intMov_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_run_intPrep_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_zValue_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_wholebrain_percent_signal', subj(i))
-%     prepProd2_imana_RY('subcortical_segment_percent_signal',subj(i))
-%     prepProd2_imana_RY('subcortical_smooth',subj(i))
-%     prepProd2_imana_RY('subcortical_calc_dissimilarity_maps',subj(i))
-%     prepProd2_imana_RY('subcortical_normalise_RSA',subj(i))
-%     prepProd2_imana_RY('subcortical_normalise_LDA',subj(i))
-%     prepProd2_imana_RY('subcortical_normalise_perc',subj(i))
+% parfor i=1:numel(subj)
+%     disp(['RSA Subcortical Analysis: ' subjName{subj(i)}])
+% %     prepProd2_imana_RY('subcortical_make_nii',subj(i))
+% %     prepProd2_imana_RY('subcortical_make_structs',subj(i))
+% %     prepProd2_imana_RY('subcortical_reslice_structs',subj(i))
+% %     prepProd2_imana_RY('subcortical_funcmask_structs',subj(i))
+% %     prepProd2_imana_RY('subcortical_make_ROIs',subj(i))
+% %     prepProd2_imana_RY('subcortical_make_search',subj(i))
 %     
-    prepProd2_imana_RY('subcortical_normalise_anat_masks',subj(i))
-%     
-%     prepProd2_imana_RY('subcortical_voxel_counts',subj(i))
-end
+% %     prepProd2_imana_RY('subcortical_run_search_RSA',subj(i),1)
+% %     prepProd2_imana_RY('subcortical_run_spatMov_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_run_spatPrep_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_run_tempMov_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_run_tempPrep_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_run_intMov_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_run_intPrep_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_zValue_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_wholebrain_percent_signal', subj(i))
+% %     prepProd2_imana_RY('subcortical_segment_percent_signal',subj(i))
+% %     prepProd2_imana_RY('subcortical_segment_contrasts',subj(i))
+% %     prepProd2_imana_RY('subcortical_smooth',subj(i))
+% %     prepProd2_imana_RY('subcortical_calc_dissimilarity_maps',subj(i))
+% %     prepProd2_imana_RY('subcortical_normalise_RSA',subj(i))
+% %     prepProd2_imana_RY('subcortical_normalise_LDA',subj(i))
+% %     prepProd2_imana_RY('subcortical_normalise_conperc',subj(i))
+% 
+% 
+% 
+% %     
+% %     prepProd2_imana_RY('subcortical_voxel_counts',subj(i))
+% end
 
+% disp('Pre-whitening subcortical...')
+% prepProd2_imana_RY('subcortical_preWhiten',1)
+% 
+disp('calculating subcortical RDMs and formatting LDA...')
+prepProd2_imana_RY('subcortical_calculate')
+
+%Sub Group functions
 % prepProd2_imana_RY('subcortical_group_avg_RSA')
 % prepProd2_imana_RY('subcortical_group_avg_LDA')
 % prepProd2_imana_RY('subcortical_group_avg_perc')
+% prepProd2_imana_RY('subcortical_group_randomeffects_RSA')
+% prepProd2_imana_RY('subcortical_group_randomeffects_LDA')
+% prepProd2_imana_RY('subcortical_group_randomeffects_con')
+% prepProd2_imana_RY('subcortical_group_estimate_RSA')
+% prepProd2_imana_RY('subcortical_group_estimate_LDA')
+% prepProd2_imana_RY('subcortical_group_estimate_con')
+% prepProd2_imana_RY('subcortical_normalise_anat_masks',subj(i))
 
-% disp('Pre-whitening...')
-% prepProd2_imana_RY('subcortical_preWhiten',1)
-
-% disp('calculating RDMs and formatting LDA...')
-% prepProd2_imana_RY('subcortical_calculate')
 
 % parfor i=1:numel(subj)
-%     disp(['RSA Cerebellum Analysis: ' subjName{subj(i)}])
+%     disp(['Cerebellum Analysis: ' subjName{subj(i)}])
 %     
 % %     prepProd2_imana_RY('cerebellum_make_nii',subj(i))
 % %     prepProd2_imana_RY('cerebellum_suit_normalise',subj(i))
 % %     prepProd2_imana_RY('cerebellum_make_mask',subj(i))
+% %     if i == 1
+% %         prepProd2_imana_RY('cerebellum_make_structs')
+% %     end
+% %     prepProd2_imana_RY('cerebellum_structs_to_anat', subj(i))
+% %     prepProd2_imana_RY('cerebellum_reslice_structs', subj(i))
+% %     prepProd2_imana_RY('cerebellum_funcmask_structs', subj(i))
+% %     prepProd2_imana_RY('cerebellum_make_ROIs', subj(i))
+% %     prepProd2_imana_RY('')
+% %     prepProd2_imana_RY('')
+% %     prepProd2_imana_RY('')
+% 
 % %     prepProd2_imana_RY('cerebellum_make_search',subj(i))
 % %     prepProd2_imana_RY('cerebellum_run_search_RSA',subj(i),1) %varargin 2 = 1 for blueBear
 % %     prepProd2_imana_RY('cerebellum_run_spatMov_LDA',subj(i))
@@ -127,7 +150,13 @@ end
 % %     prepProd2_imana_RY('cerebellum_normalise_LDA',subj(i))
 % end
 
-%RSA Group functions
+disp('Pre-whitening cerebellum...')
+prepProd2_imana_RY('cerebellum_preWhiten',1)
+
+disp('calculating cerebellum RDMs and formatting LDA...')
+prepProd2_imana_RY('cerebellum_calculate')
+
+%CB Group functions
 % prepProd2_imana_RY('cerebellum_group_avg_RSA')
 % prepProd2_imana_RY('cerebellum_group_avg_LDA')
 % prepProd2_imana_RY('cerebellum_group_avg_psc')

@@ -14,50 +14,49 @@ subj=[3,5,6,7,9,10,13,16,17,18,20,21,22,25,26,31,32,34,36,38,39,40,41,42]; %Ps t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp(['Analysing: ' num2str(subj)])
+disp(['Subj N = ' num2str(length(subj))])
 
-for i=subj
-    disp('Subj#'); disp(subjName{i});
-    %
-    %     prepProd2_imana_RY('make_nii',i);
-    %
-    %     prepProd2_imana_RY('set_AC',i); %%TO BE DONE MANUALLY
-    %
-    %     prepProd2_imana_RY('slice_timing',i);
-    %     prepProd2_imana_RY('realign_unwarp',i);
-    %     prepProd2_imana_RY('meanepi',i);
-    %
-    %     prepProd2_imana_RY('coreg',i); %%TO BE DONE MANUALLY
-    %
-    %     prepProd2_imana_RY('glm_set',i);
-    %     prepProd2_imana_RY('glm_estimate',i);
-    %     prepProd2_imana_RY('glm_contrast',i);
-    %         prepProd2_imana_RY('con_smooth', i);
-    %
-    %     prepProd2_imana_RY('segment',i);
-    %     prepProd2_imana_RY('make_mask',i);
-    %     prepProd2_imana_RY('MVA_search',i);
-    %     prepProd2_imana_RY('MVA_do_overallMov',i);
-    %     prepProd2_imana_RY('MVA_do_overallPrep',i);
-    %     prepProd2_imana_RY('MVA_do_spatOneout_Mov',i);
-    %     prepProd2_imana_RY('MVA_do_spatOneout_Prep',i);
-    %     prepProd2_imana_RY('MVA_do_tempOneout_Mov',i);
-    %     prepProd2_imana_RY('MVA_do_tempOneout_Prep',i);
-    %     prepProd2_imana_RY('MVA_do_Int_Mov',i);
-    %     prepProd2_imana_RY('MVA_do_Int_Prep',i);
-        prepProd2_imana_RY('MVA_do_Int_Mov_2x2',i);
-        prepProd2_imana_RY('MVA_do_Int_Prep_2x2',i);
-    %     prepProd2_imana_RY('MVA_zValue',i);
-        prepProd2_imana_RY('MVA_zValue_oneOut',i);
-    %     prepProd2_imana_RY('MVA_smooth_zAcc',i);
-    %     prepProd2_imana_RY('MVA_smooth_rawAcc',i);
-    %     prepProd2_imana_RY('MNI_normalization',i);
-    %     prepProd2_imana_RY('MNI_normalizationcc',i);
-    %         prepProd2_imana_RY('MNI_normalization_perc&con',i);
-    
-end
+% parfor i=1:numel(subj)
+%     disp('Subj#'); disp(subjName{subj(i)});
+%     %
+%     %     prepProd2_imana_RY('make_nii',subj(i));
+%     %
+%     %     prepProd2_imana_RY('set_AC',subj(i)); %%TO BE DONE MANUALLY
+%     %
+%     %     prepProd2_imana_RY('slice_timing',subj(i));
+%     %     prepProd2_imana_RY('realign_unwarp',subj(i));
+%     %     prepProd2_imana_RY('meanepi',subj(i));
+%     %
+%     %     prepProd2_imana_RY('coreg',subj(i)); %%TO BE DONE MANUALLY
+%     %
+%     %     prepProd2_imana_RY('glm_set',subj(i));
+%     %     prepProd2_imana_RY('glm_estimate',subj(i));
+%     %     prepProd2_imana_RY('glm_contrast',subj(i));
+%     %         prepProd2_imana_RY('con_smooth', subj(i));
+%     %
+%     %     prepProd2_imana_RY('segment',subj(i));
+%     %     prepProd2_imana_RY('make_mask',subj(i));
+%     %     prepProd2_imana_RY('MVA_search',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_overallMov',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_overallPrep',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_spatOneout_Mov',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_spatOneout_Prep',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_tempOneout_Mov',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_tempOneout_Prep',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_Int_Mov',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_Int_Prep',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_Int_Mov_2x2',subj(i));
+%     %     prepProd2_imana_RY('MVA_do_Int_Prep_2x2',subj(i));
+%     %     prepProd2_imana_RY('MVA_zValue',subj(i));
+%     %     prepProd2_imana_RY('MVA_zValue_oneOut',subj(i));
+%     %     prepProd2_imana_RY('MVA_smooth',subj(i));
+%     %     prepProd2_imana_RY('MNI_normalization',subj(i));
+%     %     prepProd2_imana_RY('MNI_normalization_perc&con',subj(i));
+%     
+% end
 
 %%%%%%%%%%%%% WHOLE BRAIN GROUP %%%%%%%%%%%%
-% prepProd2_imana_RY('group_avg_perc')
+%     prepProd2_imana_RY('group_avg')
 %     prepProd2_imana_RY('glm_contrastGroup');
 %     prepProd2_imana_RY('glm_contrastEstimate');
 %     prepProd2_imana_RY('MVA_group');
@@ -71,7 +70,7 @@ end
 % %     prepProd2_imana_RY('subcortical_make_nii',subj(i))
 % %     prepProd2_imana_RY('subcortical_make_structs',subj(i))
 % %     prepProd2_imana_RY('subcortical_reslice_structs',subj(i))
-% %     prepProd2_imana_RY('subcortical_make_mask',subj(i))
+% %     prepProd2_imana_RY('subcortical_funcmask_structs',subj(i))
 % %     prepProd2_imana_RY('subcortical_make_ROIs',subj(i))
 % %     prepProd2_imana_RY('subcortical_make_search',subj(i))
 %     
@@ -85,49 +84,79 @@ end
 % %     prepProd2_imana_RY('subcortical_zValue_LDA',subj(i))
 % %     prepProd2_imana_RY('subcortical_wholebrain_percent_signal', subj(i))
 % %     prepProd2_imana_RY('subcortical_segment_percent_signal',subj(i))
+% %     prepProd2_imana_RY('subcortical_segment_contrasts',subj(i))
 % %     prepProd2_imana_RY('subcortical_smooth',subj(i))
 % %     prepProd2_imana_RY('subcortical_calc_dissimilarity_maps',subj(i))
 % %     prepProd2_imana_RY('subcortical_normalise_RSA',subj(i))
 % %     prepProd2_imana_RY('subcortical_normalise_LDA',subj(i))
-% %     prepProd2_imana_RY('subcortical_normalise_perc',subj(i))
+% %     prepProd2_imana_RY('subcortical_normalise_conperc',subj(i))
+% 
+% 
+% 
+% %     
 % %     prepProd2_imana_RY('subcortical_voxel_counts',subj(i))
-% %     prepProd2_imana_RY('subcortical_makeROIs',subj(i))
 % end
 
-% prepProd2_imana_RY('subcortical_group_avg_RSA')
-% prepProd2_imana_RY('subcortical_group_avg_LDA')
-% prepProd2_imana_RY('subcortical_group_avg_perc')
-
-% disp('Pre-whitening...')
+% disp('Pre-whitening subco...')
 % prepProd2_imana_RY('subcortical_preWhiten',1)
-
+% 
 % disp('calculating RDMs and formatting LDA...')
 % prepProd2_imana_RY('subcortical_calculate')
 
-% parfor i=1:numel(subj)
-%     disp(['RSA Cerebellum Analysis: ' subjName{subj(i)}])
-%     
-% %     prepProd2_imana_RY('cerebellum_make_nii',subj(i))
-% %     prepProd2_imana_RY('cerebellum_suit_normalise',subj(i))
-% %     prepProd2_imana_RY('cerebellum_make_mask',subj(i))
-% %     prepProd2_imana_RY('cerebellum_make_search',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_search_RSA',subj(i),1) %varargin 2 = 1 for blueBear
-% %     prepProd2_imana_RY('cerebellum_run_spatMov_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_spatPrep_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_tempMov_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_tempPrep_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_intMov_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_run_intPrep_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_zValue_LDA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_smooth',subj(i))
-% %     prepProd2_imana_RY('cerebellum_calc_dissimilarity_maps',subj(i))
-% %     prepProd2_imana_RY('cerebellum_normalise_RSA',subj(i))
-% %     prepProd2_imana_RY('cerebellum_normalise_LDA',subj(i))
-% end
+%Sub Group functions
+% prepProd2_imana_RY('subcortical_group_avg_RSA')
+% prepProd2_imana_RY('subcortical_group_avg_LDA')
+% prepProd2_imana_RY('subcortical_group_avg_perc')
+% prepProd2_imana_RY('subcortical_group_randomeffects_RSA')
+% prepProd2_imana_RY('subcortical_group_randomeffects_LDA')
+% prepProd2_imana_RY('subcortical_group_randomeffects_con')
+% prepProd2_imana_RY('subcortical_group_estimate_RSA')
+% prepProd2_imana_RY('subcortical_group_estimate_LDA')
+% prepProd2_imana_RY('subcortical_group_estimate_con')
+% prepProd2_imana_RY('subcortical_normalise_anat_masks',subj(i))
 
-%RSA Group functions
+
+parfor i=1:numel(subj)
+    disp(['Cerebellum Analysis: ' subjName{subj(i)}])
+    
+%     prepProd2_imana_RY('cerebellum_make_nii',subj(i))
+%     prepProd2_imana_RY('cerebellum_suit_normalise',subj(i))
+%     prepProd2_imana_RY('cerebellum_make_mask',subj(i))
+%     if i == 1
+%         prepProd2_imana_RY('cerebellum_make_structs')
+%     end
+%     prepProd2_imana_RY('cerebellum_structs_to_anat', subj(i))
+%     prepProd2_imana_RY('cerebellum_reslice_structs', subj(i))
+%     prepProd2_imana_RY('cerebellum_funcmask_structs', subj(i))
+%     prepProd2_imana_RY('cerebellum_make_ROIs', subj(i))
+%     prepProd2_imana_RY('')
+%     prepProd2_imana_RY('')
+%     prepProd2_imana_RY('')
+
+%     prepProd2_imana_RY('cerebellum_make_search',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_search_RSA',subj(i),1) %varargin 2 = 1 for blueBear
+%     prepProd2_imana_RY('cerebellum_run_spatMov_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_spatPrep_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_tempMov_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_tempPrep_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_intMov_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_run_intPrep_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_zValue_LDA',subj(i))
+%     prepProd2_imana_RY('cerebellum_reslice_contrast',subj(i))
+%     prepProd2_imana_RY('cerebellum_smooth',subj(i))
+%     prepProd2_imana_RY('cerebellum_normalise_contrast',subj(i))
+%     prepProd2_imana_RY('cerebellum_calc_dissimilarity_maps',subj(i))
+%     prepProd2_imana_RY('cerebellum_normalise_RSA',subj(i))
+%     prepProd2_imana_RY('cerebellum_normalise_LDA',subj(i))
+end
+
+% disp('Pre-whitening cerebellum...')
+% prepProd2_imana_RY('cerebellum_preWhiten',1)
+
+%CB Group functions
 % prepProd2_imana_RY('cerebellum_group_avg_RSA')
 % prepProd2_imana_RY('cerebellum_group_avg_LDA')
+% prepProd2_imana_RY('cerebellum_group_avg_psc')
 % prepProd2_imana_RY('cerebellum_group_randomeffects')
 % prepProd2_imana_RY('cerebellum_group_estimate')
 
