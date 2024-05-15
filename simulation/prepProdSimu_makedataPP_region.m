@@ -1,18 +1,16 @@
-function [Y, Y_hat, model, snr]=prepProdSimu_makedataPP(varargin)
+function [Y, Y_hat, model, snr, tgtSnr, vnoise]=prepProdSimu_makedataPP_region(nVox, tgtSnr, varargin)
 
 %=======================================================================================
-% [Y]=prepProdSimu_makedataPP(varargin)
+% [Y]=prepProdSimu_makedataPP_region(R, varargin)
 %
 % Modelling data for multivariate classification for prepProd
-% Used by function prepProdSimu_runsimu
+% Models regions based on the number of voxels and signal to noise ratio
+% (snr ratio calculated by noiseNormalizeBeta_RY)
 %
-% The following inputs can be provided:
-%  prepProd;  % preparation and production phases correlate? 0 yes 1 no
-%               if 1, provide 1x2 vectors for vord, vtemp, and vinter
-%  vord;      % variance across different orders
-%  vtemp;     % variance across different timings
-%  vinter;    % variance across different sequences
-%  vnoise=;   % variance of the noise
+% Inputs:
+%  nVox;    % number of voxels in target region (can be avg acros subj)
+%  snr;     % signal to noise ratio of region (calculated by
+%               noiseNormalizeBeta_RY)
 %
 % Output:
 %  Y          % Resulting data including noise
@@ -22,20 +20,31 @@ function [Y, Y_hat, model, snr]=prepProdSimu_makedataPP(varargin)
 %
 % RY 10/2022
 
-%Change the below parameters to suit desired simulation
-classes=4;
-nr   = 6;   % trial type/class repetitions (i.e. runs)
-ns   = classes*nr;  % trials/samples <<
-nv   = 160; %160 voxels
-np   = 8;  %parameters or treatment effects (ncolumn of design matrix)
-prepProd    = 0;
-prodscaling = 1;
-vord        = 0.1;
-vtemp       = 0.2;
-vinter      = 0.3;
-vnoise      = 2;
+%%%Calculate required input noise for each region to achieve target snr.
+%%%Signal is consistent across simulations. To adjust snr, we adjust the
+%%%residuals (calculated as Y - X*Beta). Residuals scale linearly with the
+%%%amount of noise input into the simulations (by a factor of ~120, checked
+%%%by seeing squared residuals at different noise levels: mean(sum(res.^2))
+simuSignal = 0.8556; %consistent signal across simulations - calculated as spm.xX.trRV*mean(diag(spm.xX.Bcov))
+resScaling = 48;     %consistent scaling from residual to noise input (residual / vnoise)
+%found in noiseNormalizeBeta_RY
 
-vararginoptions(varargin,{'prepProd','prodscaling','vord','vtemp','vinter','vnoise'});
+resTarget = simuSignal / tgtSnr;
+vnoise    = resTarget / resScaling; %input = tgtres / resScaling (see above)
+nv        = nVox; %n voxels according to input
+
+%Change the below parameters to suit desired simulation
+classes     = 4;
+nr          = 6;  % trial type/class repetitions
+np          = 8;  %parameters or treatment effects (ncolumn of design matrix)
+
+prepProd    = 1;         %0: prep = prod, 1: prep ~= prod
+prodscaling = 1;         %scaling of prod relative to prep (multiplicative) - prod = prep * prodscaling
+vord        = [0.3 0.1]; %distance between two orders
+vtemp       = [0.4 0.7]; %distance between two timings
+vinter      = [0.6 0.8]; %distance between four sequences
+
+vararginoptions(varargin,{'prepProd','prodscaling','vord','vtemp','vinter'});
 
 %Generate design matrix: (9 x 8) trials x 15 effects
 %  order   timing  sequence    prep/prod
@@ -74,6 +83,7 @@ if ~prepProd %if prep and prod are chosen to come from the same distribution
         R = R + prodscaling;                        %then scale by input variable...
         R = R + normrnd(0,sqrt(vnoise),classes,nv); %then add the noise (so we don't also scale the noise, we add it after)
         model    = [model; X*U; (X*U)+prodscaling]; %add to model run-by-run
+        
         
         PR = [P;R];
         Y = [Y ; PR]; %concatenate
@@ -149,7 +159,7 @@ Y_hat=beta_hat*sq;
 
 if (nargout>1)
     snr = spm.xX.trRV*mean(diag(spm.xX.Bcov)) / mean(sum(res.^2));
-end 
+end
 
 % figure
 % imagesc(Y)

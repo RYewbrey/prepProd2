@@ -1,7 +1,7 @@
 function prepProd2_imana_RY(what,varargin)
 
 
-%PC paths Load relevant Matlab directories
+%PC paths Load relevant Matlab directories RY
 % addpath(genpath('Z:/rhys/prepProd2/matlab')); %Adjust! loaded with subdirectories (genpath command)
 % addpath('Z:/toolboxes/spm12');
 % addpath(genpath('Z:/toolboxes/tools')); %joern's extensions for spm
@@ -13,6 +13,21 @@ function prepProd2_imana_RY(what,varargin)
 % addpath(genpath('Z:/toolboxes/permutest')); %permutest for crossSection analysis
 % addpath('Z:/toolboxes/rsatoolbox_matlab'); %RSA toolbox
 % addpath(genpath('Z:/toolboxes/pcm_toolbox')); %PCM toolbox
+
+
+%PC paths Load relevant Matlab directories KK
+% addpath(genpath('Z:\kornyshk-kornyshevalab\rhys\prepProd2\matlab')); %Adjust! loaded with subdirectories (genpath command)
+% addpath('Z:\kornyshk-kornyshevalab\toolboxes\spm12');
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\tools')); %joern's extensions for spm
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\userfun')); %joern's util tools (open source)
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\region-master')); %joern's region toolbox for spm
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\spm12/toolbox\suit')); %SUIT Cerebellum
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\spm12\toolbox\DARTEL')); %DARTEL deformation for suit reslice
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\pm12/toolbox\OldSeg')); %for suit reslice
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\permutest')); %permutest for crossSection analysis
+% addpath('Z:\kornyshk-kornyshevalab\toolboxes\rsatoolbox_matlab'); %RSA toolbox
+% addpath(genpath('Z:\kornyshk-kornyshevalab\toolboxes\pcm_toolbox')); %PCM toolbox
+
 %
 %BlueBear paths
 % addpath(genpath('/rds/projects/k/kornyshk-kornyshevalab/rhys/prepProd2/matlab')); %Adjust! loaded with subdirectories (genpath command)
@@ -59,6 +74,7 @@ rsaDir=[baseDir filesep 'imaging' filesep 'rsa'];
 rsaCorticalDir=[rsaDir filesep 'cortical'];
 rsaCorticalGroupDir=[baseDir filesep 'imaging' filesep 'rsa_secondlevel' filesep 'cortical'];
 subcorticalPeaksDir=[subcorticalGroupDir filesep 'cluster_peaks'];
+simuDir = [baseDir filesep 'imaging' filesep 'simulations'];
 
 %%% Names and IDs
 subj=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42];
@@ -2017,7 +2033,7 @@ switch(what)
             L.voxel = vox;
             save ([subcortStructs{r} '_' 'volsearch160.mat'], 'L') %saves to subcortical subject directory
         end%for subcort region
-    case 'subcortical_preWhiten' %pre-whiten data from subcortical ROIs ready for RSA & LDA
+    case 'subcortical_preWhiten' %pre-whiten data from subcortical ROIs ready for RSA
         
         T = []; blueBear = varargin{1}; %s=varargin{1};
         
@@ -2029,7 +2045,7 @@ switch(what)
             
             V = SPM.xY.VY;
             
-            %replace fnames for bluebear compatibility
+            %replace SPM fnames for bluebear compatibility
             if blueBear == 1
                 for i=1:length(V)
                     V(i).fname = strrep(V(i).fname,'\','/');
@@ -2044,12 +2060,13 @@ switch(what)
                 percMove = region_getdata(spm_vol(fullfile(glmDir, subj_name{s}, 'perc_0001.nii')), R{r}); %percent signal change
                 percPrep = region_getdata(spm_vol(fullfile(glmDir, subj_name{s}, 'perc_0002.nii')), R{r});
                 
-                [betaW,resMS,~,beta] = rsa.spm.noiseNormalizeBeta(Y,SPM);
+                [betaW,resMS,~,beta,~,~,snr] = noiseNormalizeBeta_RY(Y,SPM);
                 
-                S.betaW    = {betaW};
-                S.betaUW   = {bsxfun(@rdivide,beta,sqrt(resMS))};
-                S.betaRAW  = {beta};
-                S.resMS    = {resMS};
+                S.betaW    = {betaW}; %multivariate pre-whiten
+                S.betaUW   = {bsxfun(@rdivide,beta,sqrt(resMS))}; %univariate pre-whiten
+                S.betaRAW  = {beta}; %Raw
+                S.resMS    = {resMS}; %residual
+                S.snr      = snr;
                 S.percMov  = {percMove};
                 S.percPrep = {percPrep};
                 S.SN       = s;
@@ -2068,7 +2085,7 @@ switch(what)
         R = load('preWhitened_betas.mat');
         saveDir = fullfile(rsaDir, 'subcortical');
         
-        nrruns = length(run); nCond = 8; nClassifiers = 6;
+        nrruns = length(run); nCond = 8; nClassifiers = 8;
         
         %%% Distances: prepare condition and partition (run) vectors
         runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
@@ -2097,13 +2114,14 @@ switch(what)
         R.Sig       = cell(length(R.SN), 1); %covariance matrix of the beta estimates across different imaging runs
         R.G         = cell(length(R.SN), 1); %second moment matrix
         R.matrix    = cell(length(R.SN), 1); % Pairwise contrast matrix
-        R.acc       = NaN(length(R.SN), nClassifiers); %LDA accuracy - 1ordPrep, 2timPrep, 3intPrep, 4ordProd, 5timProd, 6intProd
+        R.acc       = NaN(length(R.SN), nClassifiers); %LDA accuracy - 1ordPrep, 2timPrep, 3intPrep, 4intPrepOneOut, 5ordProd, 6timProd, 7intProd, 8intProdOneOut
         
         for s = anaSubj%for subj
             load(fullfile(glmDir, subj_name{s}, 'SPM'), 'SPM') %load SPM design matrix for distance function
             for r = unique(R.region)'%for region
-                B    = R.betaW{R.region == r & R.SN == s};
-                BRAW = R.betaRAW{R.region == r & R.SN == s};
+                B      = R.betaW{R.region == r & R.SN == s};
+                BRAW   = R.betaRAW{R.region == r & R.SN == s};
+                resMS = R.resMS{R.region == r & R.SN == s};
                 
                 %%%Distances
                 [d, Sig] = rsa.distanceLDC(B, partVec, condVec, SPM.xX.X);
@@ -2111,8 +2129,8 @@ switch(what)
                 matrix   = indicatorMatrix('allpairs',1:nCond); % Pairwise contrast matrix
                 
                 %%%Classification
-                [acc(1), acc(2), acc(3)] = prepProdSimu_classify(BRAW(prepBetas, :)); %factorial classify prep sequences
-                [acc(4), acc(5), acc(6)] = prepProdSimu_classify(BRAW(prodBetas, :)); %and prod sequences
+                [acc(1), acc(2), acc(3), acc(4)] = prepProdSimu_classify(BRAW(prepBetas, :)); %factorial classify prep sequences
+                [acc(5), acc(6), acc(7), acc(8)] = prepProdSimu_classify(BRAW(prodBetas, :)); %and prod sequences
                 
                 %%%Percent signal change
                 meanPercMov  = mean(R.percMov{R.region == r & R.SN == s});
@@ -2159,12 +2177,12 @@ switch(what)
         for i=1:length(R.betaW)%for data points
             for j=1:size(R.acc, 2)%for classifiers
                 Racc.acc(loopCounter,1)   = R.acc(i, j);
-                if j < 4
+                if j < 5%if prep classifier
                     Racc.phase(loopCounter,1) = 1;
                     Racc.cond(loopCounter,1)  = j;
-                elseif j > 3
+                elseif j > 4%if prod classifier
                     Racc.phase(loopCounter,1) = 2;
-                    Racc.cond(loopCounter,1)  = j - 3;
+                    Racc.cond(loopCounter,1)  = j - 4; %keeps conds 1:4
                 end
                 Racc.SN(loopCounter,1)    = R.SN(i);
                 Racc.region(loopCounter,1) = R.region(i);
@@ -2205,6 +2223,9 @@ switch(what)
         dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat');
         load(dataFile, 'R', 'Rdist', 'Racc', 'Rperc')%load it
         
+        %Set eucScaling variable to same size as Rdist
+        Rdist.eucScaling = nan(length(Rdist.SN),1);
+        
         %%%Set save directory - we re-save the distances to include
         %%%cross-phase MDS
         saveDir = fullfile(rsaDir, 'subcortical');
@@ -2213,39 +2234,60 @@ switch(what)
         labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
         
         %Extract data
-        for s=1:length(R.G)%for subj * region
+        for s=1:length(R.G)%for subj & region
             G(:,:,s)= R.G{s}; %extract representational dissimilarity matrix from cells into 3D matrix
         end%for subj * region
         
-        eucPcDist=[]; A.dist=[]; A.phase = []; A.cond = []; A.SN = []; A.region = [];
-        for i=unique(R.region)'
+        for i=unique(R.region)'%for region
             COORD = [];
             GRegion = G(:,:,R.region == i); %extract region variance/covariance matrices
             
-            lc=1;
             for j=1:length(GRegion) %get MDS for each subj in the region
-                [COORD(:,:,lc),~] = pcm_classicalMDS(GRegion(:,:,lc));
-                lc = lc+1;
+                [COORD(:,:,j),~] = pcm_classicalMDS(GRegion(:,:,j));
             end
             
             PCs = COORD(:,2:3,:); %PCs 2 and 3
             
             %Euclidean distance between phases within sequences for PC2
             %and PC3
-            for j=1:length(PCs)%for subjs
+            for j=1:length(PCs)%for subj
                 for k=1:4%for within-sequence prep vs prod
                     eucPcDist(k) = pdist([PCs(k,:,j)' PCs(k+4,:,j)'], 'euclidean');
-                end
+                end%for within-sequence prep vs prod
+                
+                %pairwise distance measures k(k-1) / 2
+                %within prep
+                prepDists(1) = pdist([PCs(1,:,j)', PCs(2,:,j)'],'euclidean');
+                prepDists(2) = pdist([PCs(1,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(3) = pdist([PCs(1,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(4) = pdist([PCs(2,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(5) = pdist([PCs(2,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(6) = pdist([PCs(3,:,j)', PCs(4,:,j)'],'euclidean');
+                %within prod
+                prodDists(1) = pdist([PCs(5,:,j)', PCs(6,:,j)'],'euclidean');
+                prodDists(2) = pdist([PCs(5,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(3) = pdist([PCs(5,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(4) = pdist([PCs(6,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(5) = pdist([PCs(6,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(6) = pdist([PCs(7,:,j)', PCs(8,:,j)'],'euclidean');
+                %%%FIND A BETTER WAY TO CODE THIS ^
+                
+                prepSize = mean(prepDists);
+                prodSize = mean(prodDists);
+                avgSize  = mean([prepSize, prodSize]);
+                
                 %Collect variables to later add to RDist
-                Rdist.dist(end+1,1) = mean(eucPcDist);
-                Rdist.phase(end+1,1)         = 0;
-                Rdist.cond(end+1,1)          = 2;
-                Rdist.SN(end+1,1)            = anaSubj(j);
-                Rdist.region(end+1,1)        = i;
-            end
-        end
+                Rdist.dist(end+1,1)        = mean(eucPcDist);
+                Rdist.eucScaling(end+1,1)  = avgSize;
+                Rdist.phase(end+1,1)       = 0;
+                Rdist.cond(end+1,1)        = 2;
+                Rdist.SN(end+1,1)          = anaSubj(j);
+                Rdist.region(end+1,1)      = i;
+            end%for subj
+        end%for region
         
-        save(fullfile(saveDir, 'subRoiDistances.mat'), 'R', 'Rdist', 'Racc', 'Rperc')
+        save(fullfile(saveDir, 'subRoiDistances_withmds.mat'), 'R', 'Rdist', 'Racc', 'Rperc')
+        
     case 'subcortical_run_search_RSA'
         
         s=varargin{1}; blueBear=varargin{2};
@@ -2498,7 +2540,7 @@ switch(what)
             prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
             prod=[repmat(prod,1,nrruns) runBSL];
             
-            c=repmat([1 2 2 1],1,nrruns); % extract conditions (leave out errors!)
+            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
             run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
             out = {fullfile(subcorticalDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Int_160_Mov.nii'])};
             
@@ -2535,7 +2577,7 @@ switch(what)
             prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
             prep=[repmat(prep,1,nrruns) runBSL];
             
-            c=repmat([1 2 2 1],1,nrruns); % extract conditions (leave out errors!)
+            c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
             run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
             out = {fullfile(subcorticalDir, subj_name{s}, [subj_name{s}, '_' subcortStructs{r} '_accuracy_Int_160_Prep.nii'])};
             
@@ -2563,6 +2605,7 @@ switch(what)
         cd(fullfile(subcorticalDir,subj_name{s}));
         subcortStructs = subcortStructs(2,:);%names from second row
         
+        %zValue the order and timing maps
         for r=1:length(subcortStructs)
             
             takeOneOutIter=2;
@@ -2575,12 +2618,33 @@ switch(what)
             images= {...
                 '_accuracy_Spat_160_Mov','_accuracy_Spat_160_Prep',...
                 '_accuracy_Temp_160_Mov','_accuracy_Temp_160_Prep',...
-                '_accuracy_Int_160_Mov', '_accuracy_Int_160_Prep',...
                 };
-            
             outimages={...
                 '_zacc_Spat_160_Mov','_zacc_Spat_160_Prep',...
                 '_zacc_Temp_160_Mov','_zacc_Temp_160_Prep',...
+                };
+            
+            for j=1:numel(images)
+                input_image= fullfile([subj_name{s} '_' subcortStructs{r} images{j} '.nii']);
+                output_image= fullfile([subj_name{s} '_' subcortStructs{r} outimages{j} '.nii']);
+                spmj_imcalc_mtx(input_image, output_image,...
+                    sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
+            end
+        end
+        
+        %zValue the integrated maps
+        for r=1:length(subcortStructs)
+            
+            numTests=6;
+            numCat=4;
+            mu=1/numCat; %mu=0.25;
+            N=numTests*numCat;
+            sigma=sqrt(mu*(1-mu)*1/N);
+            
+            images= {...
+                '_accuracy_Int_160_Mov', '_accuracy_Int_160_Prep',...
+                };
+            outimages={...
                 '_zacc_Int_160_Mov', '_zacc_Int_160_Prep',...
                 };
             
@@ -2597,7 +2661,7 @@ switch(what)
         %blueBear). The correct maps, using the same code, were generated
         %on the office Mac used to perform the surface analysis. The
         %perc_000* files that are used for subsequent analysis in this
-        %script are taken from there. Do not overwrite them, or you will 
+        %script are taken from there. Do not overwrite them, or you will
         %have to retrieve them again. I intend to troubleshoot why the same
         %code does not produce the same results, but for now do not
         %overwrite. RY
@@ -2623,10 +2687,10 @@ switch(what)
         %   Vrunmean=SPM.Vbeta(SPM.xX.iB); %rest betas
         %   P={Vrunmean.fname};
         %   spmj_imcalc_mtx(P,'meanRestEPI.nii','mean(X)'); %average rest betas
-        %   
+        %
         %   X=(SPM.xX.X(:,SPM.xX.iC));      % Design matrix - raw
         %   h=median(max(X));               % Height of response;
-        %   
+        %
         %   spm_imcalc_ui({'meanRestEPI.nii','con_0001.nii'}, 'psc_0001.nii', ['100 .* ' num2str(h) ' .* i2 ./ i1']); %percent signal change - movement
         %   spm_imcalc_ui({'meanRestEPI.nii','con_0002.nii'}, 'psc_0002.nii', ['100 .* ' num2str(h) ' .* i2 ./ i1']); %percent signal change - rest
         %end
@@ -3203,7 +3267,7 @@ switch(what)
         fontSize      = 12;
         
         %Colour
-        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880], [0.4660 0.6740 0.1880]};
         rsaGB     = {[0.8 0.8 0.8], [0 0 0]};
         
         %Style
@@ -3214,14 +3278,14 @@ switch(what)
         lw = 3;
         
         %y axis scales
-        pscY     = [-0.12,  0.7];
+        pscY     = [-0.5,  1.0];
         rsaY     = [-0.003, 0.0045];
-        ldaY     = [-1.52,  2];
+        ldaY     = [-4.1,  4.5];
         crossY   = [0,      0.11];
         mdsDistY = [0       0.07];
         
         %%%Load
-        dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat');
+        dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances_withmds.mat');
         load(dataFile, 'R', 'Rdist', 'Racc', 'Rperc')%load it
         
         %%%Plot
@@ -3317,6 +3381,35 @@ switch(what)
         %-------------------------------------------------------------------------------%
         
         
+        figure %%% PSC Region subplots for prep/prod activity - box plots
+        loopCount = 1;
+        for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+            subplot(4,2,loopCount)
+            loopCount = loopCount + 1;
+            T = tapply(Rperc,{'SN', 'cond', 'phase'},{'perc', 'mean', 'name', 'perc'}, 'subset', ...
+                Rperc.region == i);
+            colour={[0 0 0]}; %black %{[0 0.545 0.545], [1 0.647 0]}; %blue & orange
+            myboxplot([T.phase], T.perc, ...
+                'linewidth', 2, 'markersize', 5, 'markertype', 'o')%, ...
+                %'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
+                %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+            ylim(pscY)
+            drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+            if i==1
+                ylabel('% signal change')
+                set(gca,'xticklabel',{'Prep', 'Prod'})
+            else
+                ylabel('')
+                yticklabels({''})
+                set(gca,'xticklabel',{''})
+            end
+            
+            set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+            title(subcortStructs{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+        end%for subcort region
+        %-------------------------------------------------------------------------------%
+        
+        
         figure %%% RSA Region subplots for prep/prod distances
         loopCount = 1;
         for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
@@ -3372,6 +3465,57 @@ switch(what)
         %-------------------------------------------------------------------------------%
         
         
+        figure %%% LDA Region subplots for prep/prod order/timing/integrated - box plots
+        loopCount = 1;
+        for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+            subplot(4,2,loopCount)
+            loopCount = loopCount + 1;
+            T = tapply(Racc,{'SN', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', Racc.region == i & Racc.cond ~= 4);
+            colour=decodeBRG;
+            myboxplot([T.phase], T.acc, 'split', T.cond, 'fillcolor', colour)%...
+            %'markertype', 'o', 'markercolor', colour, 'markerfill', colou%, 'markersize', 5, ...
+            %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+            ylim(ldaY)
+            drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+            if i==1
+                ylabel('Decoding accuracy (Z)')
+                set(gca,'xticklabel',{'Prep', '', '', 'Prod', '', ''})
+            else
+                ylabel('')
+                %yticklabels({''})
+                set(gca,'xticklabel',{''})
+            end
+            set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+            title(subcortStructs{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+        end%for subcort region
+        %-------------------------------------------------------------------------------%
+        
+        
+%         figure %%% LDA Region subplots for prep/prod order/timing/integrated - box plots with old and new integrated decoders
+%         loopCount = 1;
+%         for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+%             subplot(4,2,loopCount)
+%             loopCount = loopCount + 1;
+%             T = tapply(Racc,{'SN', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', Racc.region == i);
+%             colour=decodeBRG;
+%             myboxplot([T.phase], T.acc, 'split', T.cond, 'fillcolor', colour)%...
+%             %'markertype', 'o', 'markercolor', colour, 'markerfill', colou%, 'markersize', 5, ...
+%             %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+%             ylim(ldaY)
+%             drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+%             if i==1
+%                 ylabel('Decoding accuracy (Z)')
+%                 set(gca,'xticklabel',{'Prep', '', 'Old', 'New', 'Prod', '', 'Old', 'New'})
+%             else
+%                 ylabel('')
+%                 %yticklabels({''})
+%                 set(gca,'xticklabel',{''})
+%             end
+%             set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+%             title(subcortStructs{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+%         end%for subcort region
+%         %-------------------------------------------------------------------------------%
+        
         %%% RDMs and multi-dimensional scaling plots (for visualisation)
         labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
         
@@ -3389,11 +3533,12 @@ switch(what)
             
             subplot(4, 2, i) %%%RDM for each subcortical region
             ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
-            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind')), [0 0.022]); %display
+            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind'))); %display
             %multiplying variance/covariance by indicator matrix results in
             %dissimilarity values (crossnobis)
             title([subcortStructs{loopCount} ' RDM (crossnobis)'])
-            
+            colorbar
+            axis image
             loopCount = loopCount + 1;
         end
         %----------------------------------------------------------------------------------------------%
@@ -3446,10 +3591,12 @@ switch(what)
             grid off
             hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
             hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
-            axis equal
+            %axis equal
             title([subcortStructs{loopCount} ' multi-dimensional scaling'])
-            %ylim([-0.03, 0.04])
-            %xlim([-0.02, 0.16])
+            %xlim([-0.035, 0.035])
+            %ylim([-0.027, 0.029])
+            %zlim([-0.02, 0.3])
+            view(30,30)
             loopCount = loopCount + 1;
         end
         
@@ -3493,6 +3640,8 @@ switch(what)
             'tempProdLThal', 'tempProdLCaud', 'tempProdLPut', 'tempProdLHip', 'tempProdRThal', 'tempProdRCaud', 'tempProdRPut', 'tempProdRHip', ...
             'intPrepLThal',  'intPrepLCaud',  'intPrepLPut',  'intPrepLHip',  'intPrepRThal',  'intPrepRCaud',  'intPrepRPut',  'intPrepRHip', ...
             'intProdLThal',  'intProdLCaud',  'intProdLPut',  'intProdLHip',  'intProdRThal',  'intProdRCaud',  'intProdRPut',  'intProdRHip', ...
+            'intPrepOldLThal',  'intPrepOldLCaud',  'intPrepOldLPut',  'intPrepOldLHip',  'intPrepOldRThal',  'intPrepOldRCaud',  'intPrepOldRPut',  'intPrepOldRHip', ...
+            'intProdOldLThal',  'intProdOldLCaud',  'intProdOldLPut',  'intProdOldLHip',  'intProdOldRThal',  'intProdOldRCaud',  'intProdOldRPut',  'intProdOldRHip', ...
             };
         accData = [];
         for i=unique(Tacc.cond)'
@@ -3749,12 +3898,13 @@ switch(what)
                 percMove = region_getdata(spm_vol(fullfile(glmDir, subj_name{s}, 'perc_0001.nii')), R{r}); %percent signal change
                 percPrep = region_getdata(spm_vol(fullfile(glmDir, subj_name{s}, 'perc_0002.nii')), R{r});
                 
-                [betaW,resMS,~,beta] = rsa.spm.noiseNormalizeBeta(Y,SPM);
+                [betaW,resMS,~,beta,~,~,snr] = noiseNormalizeBeta_RY(Y,SPM);
                 
-                S.betaW    = {betaW};
-                S.betaUW   = {bsxfun(@rdivide,beta,sqrt(resMS))};
-                S.betaRAW  = {beta};
-                S.resMS    = {resMS};
+                S.betaW    = {betaW}; %multivariate pre-whiten
+                S.betaUW   = {bsxfun(@rdivide,beta,sqrt(resMS))}; %univariate pre-whiten
+                S.betaRAW  = {beta}; %Raw
+                S.resMS    = {resMS}; %residual
+                S.snr      = snr;
                 S.percMov  = {percMove};
                 S.percPrep = {percPrep};
                 S.SN       = s;
@@ -3773,7 +3923,7 @@ switch(what)
         R = load('preWhitened_betas.mat');
         saveDir = fullfile(rsaDir, 'cerebellum');
         
-        nrruns = length(run); nCond = 8; nClassifiers = 6;
+        nrruns = length(run); nCond = 8; nClassifiers = 8;
         
         %%% Distances: prepare condition and partition (run) vectors
         runBSL=[0 0 0 0 0 0]; %rest baseline to attatch at the end of the vectors
@@ -3816,8 +3966,8 @@ switch(what)
                 matrix   = indicatorMatrix('allpairs',1:nCond); % Pairwise contrast matrix
                 
                 %%%Classification
-                [acc(1), acc(2), acc(3)] = prepProdSimu_classify(BRAW(prepBetas, :)); %factorial classify prep sequences
-                [acc(4), acc(5), acc(6)] = prepProdSimu_classify(BRAW(prodBetas, :)); %and prod sequences
+                [acc(1), acc(2), acc(3), acc(4)] = prepProdSimu_classify(BRAW(prepBetas, :)); %factorial classify prep sequences
+                [acc(5), acc(6), acc(7), acc(8)] = prepProdSimu_classify(BRAW(prodBetas, :)); %and prod sequences
                 
                 %%%Percent signal change
                 meanPercMov  = mean(R.percMov{R.region == r & R.SN == s});
@@ -3864,12 +4014,12 @@ switch(what)
         for i=1:length(R.betaW)%for data points
             for j=1:size(R.acc, 2)%for classifiers
                 Racc.acc(loopCounter,1)   = R.acc(i, j);
-                if j < 4
+                if j < 5
                     Racc.phase(loopCounter,1) = 1;
                     Racc.cond(loopCounter,1)  = j;
-                elseif j > 3
+                elseif j > 4
                     Racc.phase(loopCounter,1) = 2;
-                    Racc.cond(loopCounter,1)  = j - 3;
+                    Racc.cond(loopCounter,1)  = j - 4;
                 end
                 Racc.SN(loopCounter,1)    = R.SN(i);
                 Racc.region(loopCounter,1) = R.region(i);
@@ -3910,6 +4060,9 @@ switch(what)
         dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances.mat');
         load(dataFile, 'R', 'Rdist', 'Racc', 'Rperc')%load it
         
+        %Set eucScaling variable to same size as Rdist
+        Rdist.eucScaling = nan(length(Rdist.SN),1);
+        
         %%%Set save directory - we re-save the distances to include
         %%%cross-phase MDS
         saveDir = fullfile(rsaDir, 'cerebellum');
@@ -3918,39 +4071,59 @@ switch(what)
         labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
         
         %Extract data
-        for s=1:length(R.G)%for subj * region
+        for s=1:length(R.G)%for subj & region
             G(:,:,s)= R.G{s}; %extract representational dissimilarity matrix from cells into 3D matrix
         end%for subj * region
         
-        eucPcDist=[]; A.dist=[]; A.phase = []; A.cond = []; A.SN = []; A.region = [];
-        for i=unique(R.region)'
+        for i=unique(R.region)'%for region
             COORD = [];
             GRegion = G(:,:,R.region == i); %extract region variance/covariance matrices
             
-            lc=1;
             for j=1:length(GRegion) %get MDS for each subj in the region
-                [COORD(:,:,lc),~] = pcm_classicalMDS(GRegion(:,:,lc));
-                lc = lc+1;
+                [COORD(:,:,j),~] = pcm_classicalMDS(GRegion(:,:,j));
             end
             
             PCs = COORD(:,2:3,:); %PCs 2 and 3
             
             %Euclidean distance between phases within sequences for PC2
             %and PC3
-            for j=1:length(PCs)%for subjs
+            for j=1:length(PCs)%for subj
                 for k=1:4%for within-sequence prep vs prod
                     eucPcDist(k) = pdist([PCs(k,:,j)' PCs(k+4,:,j)'], 'euclidean');
-                end
+                end%for within-sequence prep vs prod
+                
+                %pairwise distance measures k(k-1) / 2
+                %within prep
+                prepDists(1) = pdist([PCs(1,:,j)', PCs(2,:,j)'],'euclidean');
+                prepDists(2) = pdist([PCs(1,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(3) = pdist([PCs(1,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(4) = pdist([PCs(2,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(5) = pdist([PCs(2,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(6) = pdist([PCs(3,:,j)', PCs(4,:,j)'],'euclidean');
+                %within prod
+                prodDists(1) = pdist([PCs(5,:,j)', PCs(6,:,j)'],'euclidean');
+                prodDists(2) = pdist([PCs(5,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(3) = pdist([PCs(5,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(4) = pdist([PCs(6,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(5) = pdist([PCs(6,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(6) = pdist([PCs(7,:,j)', PCs(8,:,j)'],'euclidean');
+                %%%FIND A BETTER WAY TO CODE THIS ^
+                
+                prepSize = mean(prepDists);
+                prodSize = mean(prodDists);
+                avgSize  = mean([prepSize, prodSize]);
+                
                 %Collect variables to later add to RDist
-                Rdist.dist(end+1,1) = mean(eucPcDist);
-                Rdist.phase(end+1,1)         = 0;
-                Rdist.cond(end+1,1)          = 2;
-                Rdist.SN(end+1,1)            = anaSubj(j);
-                Rdist.region(end+1,1)        = i;
-            end
-        end
+                Rdist.dist(end+1,1)        = mean(eucPcDist);
+                Rdist.eucScaling(end+1,1)  = avgSize;
+                Rdist.phase(end+1,1)       = 0;
+                Rdist.cond(end+1,1)        = 2;
+                Rdist.SN(end+1,1)          = anaSubj(j);
+                Rdist.region(end+1,1)      = i;
+            end%for subj
+        end%for region
         
-        save(fullfile(saveDir, 'cbRoiDistances.mat'), 'R', 'Rdist', 'Racc', 'Rperc')
+        save(fullfile(saveDir, 'cbRoiDistances_withmds.mat'), 'R', 'Rdist', 'Racc', 'Rperc')
     case 'cerebellum_make_search'      %makes 160 voxel searchlight contained to CB grey matter
         
         s=varargin{1};
@@ -4208,7 +4381,7 @@ switch(what)
         prod      =[1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0];
         prod=[repmat(prod,1,nrruns) runBSL];
         
-        c=repmat([1 2 2 1],1,nrruns); % 2x2 design subtraction feature, see paper
+        c=repmat(1:4,1,nrruns); % 2x2 design subtraction feature, see paper
         run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
         out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Int_160_Mov.nii'])};
         
@@ -4243,7 +4416,7 @@ switch(what)
         prep      =[0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 0];
         prep=[repmat(prep,1,nrruns) runBSL];
         
-        c=repmat([1 2 2 1],1,nrruns); % extract conditions (leave out errors!)
+        c=repmat(1:4,1,nrruns); % extract conditions (leave out errors!)
         run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr; or generate: run=kron([1:nrruns],ones(1,9)); %or just run=D.RN
         out = {fullfile(suitDir, subj_name{s}, [subj_name{s}, '_accuracy_Int_160_Prep.nii'])};
         
@@ -4269,6 +4442,7 @@ switch(what)
         s=varargin{1};
         cd(fullfile(suitDir,subj_name{s}));
         
+        %zValue the order and timing maps
         takeOneOutIter=2;
         numTests=6;
         numCat=2;
@@ -4279,12 +4453,33 @@ switch(what)
         images= {...
             '_accuracy_Spat_160_Mov','_accuracy_Spat_160_Prep',...
             '_accuracy_Temp_160_Mov','_accuracy_Temp_160_Prep',...
-            '_accuracy_Int_160_Mov', '_accuracy_Int_160_Prep'...
             };
         
         outimages={...
             '_zacc_Spat_160_Mov','_zacc_Spat_160_Prep',...
             '_zacc_Temp_160_Mov','_zacc_Temp_160_Prep',...
+            };
+        
+        
+        for j=1:numel(images)
+            input_image= fullfile(suitDir,subj_name{s},[subj_name{s} images{j} '.nii']);
+            output_image= fullfile(suitDir,subj_name{s},[subj_name{s} outimages{j} '.nii']);
+            spmj_imcalc_mtx(input_image, output_image,...
+                sprintf('(X./X).*((X-%d)/%d)',mu, sigma)); %(X./X) acts like a mask! z_accuracy=(accuracy-mu)/sigma;
+        end
+        
+        %zValue the integrated map
+        numTests=6;
+        numCat=4;
+        mu=1/numCat; %mu=0.25;
+        N=numTests*numCat;
+        sigma=sqrt(mu*(1-mu)*1/N);
+        
+        images= {...
+            '_accuracy_Int_160_Mov', '_accuracy_Int_160_Prep'...
+            };
+        
+        outimages={...
             '_zacc_Int_160_Mov', '_zacc_Int_160_Prep'...
             };
         
@@ -4752,7 +4947,7 @@ switch(what)
         fontSize      = 12;
         
         %Colour
-        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880], [0.4660 0.6740 0.1880]};
         rsaGB     = {[0.8 0.8 0.8], [0 0 0]};
         
         %Style
@@ -4763,14 +4958,14 @@ switch(what)
         lw = 3;
         
         %y axis scales
-        pscY   =   [-0.12,  0.7];
+        pscY   =   [-0.5,  1.0];
         rsaY   =   [-0.003, 0.0045];
-        ldaY   =   [-1.52,  2];
+        ldaY   =   [-4.1,  4.5];
         crossY =   [0,      0.11];
         mdsDistY = [0       0.07];
         
         %%%Load
-        dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances.mat');
+        dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances_withmds.mat');
         load(dataFile, 'R', 'Rdist', 'Racc', 'Rperc')%if it exists, load it
         
         %%%Plot
@@ -4866,7 +5061,36 @@ switch(what)
         %-------------------------------------------------------------------------------%
         
         
-        figure %%% RSA Region subplots for prep/prod distances
+        figure %%% PSC Region subplots for prep/prod activity - box plots
+        loopCount = 1;
+        for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+            subplot(4,2,loopCount)
+            loopCount = loopCount + 1;
+            T = tapply(Rperc,{'SN', 'cond', 'phase'},{'perc', 'mean', 'name', 'perc'}, 'subset', ...
+                Rperc.region == i);
+            colour={[0 0 0]}; %black %{[0 0.545 0.545], [1 0.647 0]}; %blue & orange
+            myboxplot([T.phase], T.perc, ...
+                'linewidth', 2, 'markersize', 5, 'markertype', 'o')%, ...
+                %'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
+                %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+            ylim(pscY)
+            drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+            if i==1
+                ylabel('% signal change')
+                set(gca,'xticklabel',{'Prep', 'Prod'})
+            else
+                ylabel('')
+                yticklabels({''})
+                set(gca,'xticklabel',{''})
+            end
+            
+            set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+            title(regionNames{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+        end%for subcort region
+        %-------------------------------------------------------------------------------%
+        
+        
+        figure %%% RSA Region subplots for prep/prod distances - box plots
         loopCount = 1;
         for i=1:10%plots left hem on the left, right hem on the right
             subplot(5,2,loopCount)
@@ -4874,9 +5098,9 @@ switch(what)
             T = tapply(Rdist,{'SN', 'cond', 'phase'},{'dist', 'mean', 'name', 'dist'}, 'subset',...
                 Rdist.region == i & Rdist.phase < 3 & Rdist.cond == 1);
             colour={[0 0 0]}; %black %{[0 0.545 0.545], [1 0.647 0]}; %blue & orange
-            lineplot([T.phase], T.dist, ...
-                'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
-                'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+            myboxplot([T.phase], T.dist)%, ...
+                %'markertype', 'o', 'markercolor', colour, 'markerfill', colour, 'markersize', 5, ...
+                %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
             ylim(rsaY)
             drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
             if i==1
@@ -4922,6 +5146,58 @@ switch(what)
         %-------------------------------------------------------------------------------%
         
         
+        figure %%% LDA Region subplots for prep/prod order/timing/integrated - box plots
+        loopCount = 1;
+        for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+            subplot(4,2,loopCount)
+            loopCount = loopCount + 1;
+            T = tapply(Racc,{'SN', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', Racc.region == i & Racc.cond ~= 4);
+            colour=decodeBRG;
+            myboxplot([T.phase], T.acc, 'split', T.cond, 'fillcolor', colour)%...
+            %'markertype', 'o', 'markercolor', colour, 'markerfill', colou%, 'markersize', 5, ...
+            %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+            ylim(ldaY)
+            drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+            if i==1
+                ylabel('Decoding accuracy (Z)')
+                set(gca,'xticklabel',{'Prep', '', '', 'Prod', '', ''})
+            else
+                ylabel('')
+                %yticklabels({''})
+                set(gca,'xticklabel',{''})
+            end
+            set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+            title(regionNames{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+        end%for subcort region
+        %-------------------------------------------------------------------------------%
+        
+        
+%         figure %%% LDA Region subplots for prep/prod order/timing/integrated - box plots including new and old integrated
+%         loopCount = 1;
+%         for i=[1 5 2 6 3 7 4 8]%plots left hem on the left, right hem on the right
+%             subplot(4,2,loopCount)
+%             loopCount = loopCount + 1;
+%             T = tapply(Racc,{'SN', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', Racc.region == i);
+%             colour=decodeBRG;
+%             myboxplot([T.phase], T.acc, 'split', T.cond, 'fillcolor', colour)%...
+%             %'markertype', 'o', 'markercolor', colour, 'markerfill', colou%, 'markersize', 5, ...
+%             %'linecolor', colour, 'linewidth', 3, 'errorwidth', 2, 'errorcolor', colour);
+%             ylim(ldaY)
+%             drawline(0, 'dir', 'horz', 'linestyle', '-', 'linewidth', 1)
+%             if i==1
+%                 ylabel('Decoding accuracy (Z)')
+%                 set(gca,'xticklabel',{'Prep', '', 'Old', 'New', 'Prod', '', 'Old', 'New'})
+%             else
+%                 ylabel('')
+%                 %yticklabels({''})
+%                 set(gca,'xticklabel',{''})
+%             end
+%             set(gca,'FontSize',fontSize, 'FontName', 'Calibri')
+%             title(regionNames{i}, 'FontSize', titleFontSize, 'FontName', 'Calibri')
+%         end%for subcort region
+%         %-------------------------------------------------------------------------------%
+        
+        
         %%% RDMs and multi-dimensional scaling plots (for visualisation)
         labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
         
@@ -4939,11 +5215,12 @@ switch(what)
             
             subplot(5, 2, i) %%%RDM for each subcortical region
             ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
-            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind')), [0 0.022]); %display
+            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind'))); %display
             %multiplying variance/covariance by indicator matrix results in
             %dissimilarity values (crossnobis)
             title([regionNames{loopCount} ' RDM (crossnobis)'])
-            
+            colorbar
+            axis image
             loopCount = loopCount + 1;
         end
         %----------------------------------------------------------------------------------------------%
@@ -4992,10 +5269,12 @@ switch(what)
             grid off
             hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
             hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
-            axis equal
+            %axis equal
             title([regionNames{loopCount} ' multi-dimensional scaling'])
-            %ylim([-0.03, 0.04])
-            %xlim([-0.02, 0.16])
+            %xlim([-0.035, 0.035])
+            %ylim([-0.027, 0.029])
+            %zlim([-0.02, 0.3])
+            view(30,30)
             loopCount = loopCount + 1;
         end
         
@@ -5039,6 +5318,8 @@ switch(what)
             'tempProdLLob4', 'tempProdRLob4', 'tempProdLLob5', 'tempProdRLob5', 'tempProdLLob6', 'tempProdRLob6', 'tempProdLCru1', 'tempProdRCru1', 'tempProdLCru2', 'tempProdRCru2' ...
             'intPrepLLob4', 'intPrepRLob4', 'intPrepLLob5', 'intPrepRLob5', 'intPrepLLob6', 'intPrepRLob6', 'intPrepLCru1', 'intPrepRCru1', 'intPrepLCru2', 'intPrepRCru2' ...
             'intProdLLob4', 'intProdRLob4', 'intProdLLob5', 'intProdRLob5', 'intProdLLob6', 'intProdRLob6', 'intProdLCru1', 'intProdRCru1', 'intProdLCru2', 'intProdRCru2' ...
+            'intPrepOldLLob4', 'intPrepOldRLob4', 'intPrepOldLLob5', 'intPrepOldRLob5', 'intPrepOldLLob6', 'intPrepOldRLob6', 'intPrepOldLCru1', 'intPrepOldRCru1', 'intPrepOldLCru2', 'intPrepOldRCru2' ...
+            'intProdOldLLob4', 'intProdOldRLob4', 'intProdOldLLob5', 'intProdOldRLob5', 'intProdOldLLob6', 'intProdOldRLob6', 'intProdOldLCru1', 'intProdOldRCru1', 'intProdOldLCru2', 'intProdOldRCru2' ...
             };
         accData = [];
         for i=unique(Tacc.cond)'
@@ -5057,9 +5338,9 @@ switch(what)
             'LLob4', 'RLob4', 'LLob5', 'RLob5', 'LLob6', 'RLob6', 'LCru1', 'RCru1', 'LCru2', 'RCru2' ...
             };
         crossData = [];
-                for i=unique(Tcross.region)'
-                    crossData(:,end+1) = Tcross.dist(Tcross.region == i);
-                end
+        for i=unique(Tcross.region)'
+            crossData(:,end+1) = Tcross.dist(Tcross.region == i);
+        end
         crossTable = array2table([anaSubj' crossData], 'VariableNames', varnames);
         writetable(crossTable, fullfile(roiCbDir, 'crossROIspss.xlsx'))
         
@@ -5069,9 +5350,9 @@ switch(what)
             'LLob4', 'RLob4', 'LLob5', 'RLob5', 'LLob6', 'RLob6', 'LCru1', 'RCru1', 'LCru2', 'RCru2' ...
             };
         mdsDistData = [];
-                for i=unique(TmdsDist.region)'
-                    mdsDistData(:,end+1) = TmdsDist.dist(Tcross.region == i);
-                end
+        for i=unique(TmdsDist.region)'
+            mdsDistData(:,end+1) = TmdsDist.dist(Tcross.region == i);
+        end
         mdsDistTable = array2table([anaSubj' mdsDistData], 'VariableNames', varnames);
         writetable(mdsDistTable, fullfile(roiCbDir, 'mdsDistROIspss.xlsx'))
     case 'cerebellum_plot_flatmap_avg' %plot average maps onto cerebellar flat map
@@ -5200,17 +5481,17 @@ switch(what)
         
         cd(suitGroupDir)
         
-%         conds = {...
-%             'overall_prep',    'overall_prod',    'overall_cross', ...
-%             };
-%         folderNames = strcat('RSA_', conds);
-%         
-%         fileName = fullfile(folderNames{4}, 'spmT_0001.nii');
-%         surfMap = suit_map2surf(fileName);
-%         figure
-%         suit_plotflatmap(surfMap, 'threshold', 3.48, 'cscale', [0, 3.5])
-%         
-%         clear fileName
+        %         conds = {...
+        %             'overall_prep',    'overall_prod',    'overall_cross', ...
+        %             };
+        %         folderNames = strcat('RSA_', conds);
+        %
+        %         fileName = fullfile(folderNames{4}, 'spmT_0001.nii');
+        %         surfMap = suit_map2surf(fileName);
+        %         figure
+        %         suit_plotflatmap(surfMap, 'threshold', 3.48, 'cscale', [0, 3.5])
+        %
+        %         clear fileName
         
         fileName{1} = fullfile('MVA_temp_prep', 'spmT_0001.nii');
         fileName{2} = fullfile('MVA_int_prep', 'spmT_0001.nii');
@@ -5270,7 +5551,7 @@ switch(what)
         subcortStructs = strrep(subcortStructs, '_', ' '); %replace _ with space
         
         %%%Load
-        dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat');
+        dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances_withmds.mat');
         load(dataFile, 'Rdist');%load it
         
         mask = ismember(Rdist.region, targetSubNums); %remove non-target regions
@@ -5287,7 +5568,7 @@ switch(what)
         regionNames = strrep(regionNames, '_', ' '); %replace _ with space
         
         %%%Load
-        dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances.mat');
+        dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances_withmds.mat');
         load(dataFile, 'Rdist');%load it
         CBdist = Rdist;
         
@@ -5547,7 +5828,7 @@ switch(what)
         end
         
         
-    case 'simulations_RSA_LDA'
+    case 'simulations_RSA_LDA' %simulates data according to inputs and analyses
         
         %%%Prepare variables
         prepProd = 1;
@@ -5555,9 +5836,31 @@ switch(what)
         vtemp    = [0.4 0.7];
         vinter   = [0.6 0.8];
         vnoise   = 0.5;
-        nIter    = 500;%acts as subj number
+        nIter    = 500;%iterations of simulation
         
-        vararginoptions(varargin,{'prepProd','vord','vtemp','vinter','vnoise','nIter','sn'});
+        %Text
+        titleFontSize = 12;
+        fontSize      = 12;
+        
+        %Colour
+        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        rsaGB     = {[0.8 0.8 0.8], [0 0 0]};
+        
+        %Style
+        spl = [zeros(4,1); ones(4,1)];
+        label = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
+        ms = 12;
+        ls = 20;
+        lw = 3;
+        
+        %y axis scales
+        pscY     = [-0.12,  0.7];
+        rsaY     = [-0.003, 0.0045];
+        ldaY     = [-1.52,  2];
+        crossY   = [0,      0.11];
+        mdsDistY = [0       0.07];
+        
+        vararginoptions(varargin,{'prepProd','prodscaling','prewh','vord','vtemp','vinter','vnoise','nIter'});
         A=[]; %data struct
         B=[]; %output struct - stores distances, LDA, G matrix
         D=[]; %raw data store
@@ -5571,25 +5874,30 @@ switch(what)
         %%%Generate data
         for i=1:nIter %for 'subject' n
             %make the data based on input specifications
-            Y=prepProdSimu_makedataPP('prepProd',prepProd,'vord',vord,'vtemp',vtemp,'vinter',vinter,'vnoise',vnoise);
+            [Y, Y_hat, ~, snr]=prepProdSimu_makedataPP('prepProd',prepProd,'prodscaling',prodscaling,'vord',vord,'vtemp',vtemp,'vinter',vinter,'vnoise',vnoise);
             
-            A.data{i} = Y;
+            A.data{i}  = Y;
+            AP.data{i} = Y_hat;
+            A.snr{i} = snr;
             
             %%%Calculate second moment matrix
             [A.G{i},~]    = pcm_estGCrossval(A.data{i},runC,condC);
+            [AP.G{i},~]   = pcm_estGCrossval(AP.data{i},runC,condC);
             
             %%%Generate distances vector
             [A.d{i},     A.Sig{i}]     = rsa.distanceLDC(A.data{i}, runC, condC);
+            [AP.d{i},     AP.Sig{i}]     = rsa.distanceLDC(AP.data{i}, runC, condC);
             
             %%%Run linear decoding
-            prepData = [A.data{i}(1:4,:); A.data{i}(9:12,:);  A.data{i}(17:20,:); A.data{i}(25:28,:); A.data{i}(33:36,:); A.data{i}(41:44,:)];
-            prodData = [A.data{i}(5:8,:); A.data{i}(13:16,:); A.data{i}(21:24,:); A.data{i}(29:32,:); A.data{i}(37:40,:); A.data{i}(45:48,:)];
+            A.prepData = [A.data{i}(1:4,:); A.data{i}(9:12,:);  A.data{i}(17:20,:); A.data{i}(25:28,:); A.data{i}(33:36,:); A.data{i}(41:44,:)];
+            A.prodData = [A.data{i}(5:8,:); A.data{i}(13:16,:); A.data{i}(21:24,:); A.data{i}(29:32,:); A.data{i}(37:40,:); A.data{i}(45:48,:)];
             
             %               accuracy columns
-            %1: order,          2: timing,         3:integrated  
-            [prepAccuracy(i,1), prepAccuracy(i,2), prepAccuracy(i,3)] = prepProdSimu_classify(prepData);
-            [prodAccuracy(i,1), prodAccuracy(i,2), prodAccuracy(i,3)] = prepProdSimu_classify(prodData);
+            %1: order,          2: timing,         3:integrated
+            [A.prepAccuracy(i,1), A.prepAccuracy(i,2), A.prepAccuracy(i,3)] = prepProdSimu_classify(A.prepData);
+            [A.prodAccuracy(i,1), A.prodAccuracy(i,2), A.prodAccuracy(i,3)] = prepProdSimu_classify(A.prodData);
         end%for subject n
+        
         
         phaseVector = [...%index (1s are where phase is different)
             1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; ...%prep
@@ -5604,11 +5912,15 @@ switch(what)
         %%% Distance
         for s=1:nIter%for subj
             for i=1:size(phaseVector, 1)%for phase
-                    B.dist(loopCounter,1)  = mean(A.d{s}(phaseVector(i,:) == 1));
-                    B.phase(loopCounter,1) = i;
-                    B.cond(loopCounter,1)  = 1;
-                    B.sn(loopCounter,1)    = s;
-                    loopCounter = loopCounter + 1;
+                B.dist(loopCounter,1)  = mean(A.d{s}(phaseVector(i,:) == 1));
+                B.phase(loopCounter,1) = i;
+                B.cond(loopCounter,1)  = 1;
+                B.sn(loopCounter,1)    = s;
+                BP.dist(loopCounter,1)  = mean(AP.d{s}(phaseVector(i,:) == 1));
+                BP.phase(loopCounter,1) = i;
+                BP.cond(loopCounter,1)  = 1;
+                BP.sn(loopCounter,1)    = s;
+                loopCounter = loopCounter + 1;
             end%for phase
         end%for subj
         
@@ -5616,15 +5928,15 @@ switch(what)
         
         %%% Decoding
         for s=1:nIter%for subj
-            for i=1:size([prepAccuracy; prodAccuracy], 2)
-                C.acc(loopCounter,1)   = prepAccuracy(s, i);
-                C.phase(loopCounter,1) = 1;
+            for i=1:size([A.prepAccuracy; A.prodAccuracy], 2)
+                C.acc(loopCounter,1)   = A.prepAccuracy(s, i);
+                C.phase(loopCounter,1) = 1;%prep
                 C.cond(loopCounter,1)  = i;
                 C.sn(loopCounter,1)    = s;
                 loopCounter = loopCounter + 1;
                 
-                C.acc(loopCounter,1)   = prodAccuracy(s, i);
-                C.phase(loopCounter,1) = 2;
+                C.acc(loopCounter,1)   = A.prodAccuracy(s, i);
+                C.phase(loopCounter,1) = 2;%prod
                 C.cond(loopCounter,1)  = i;
                 C.sn(loopCounter,1)    = s;
                 loopCounter = loopCounter + 1;
@@ -5636,6 +5948,14 @@ switch(what)
         colour={[0 0 0], [1 1 1], [0.6 0.6 0.6]};
         barplot(T.phase, T.dist, 'split', T.phase, 'facecolor', colour)
         ylabel('Crossnobis dissimilarity')
+        xticklabels({'Prep', 'Prod', 'Cross'})
+        title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        
+        figure %%% Distances prewhitened
+        T = tapply(BP,{'sn', 'phase'},{'dist', 'mean', 'name', 'dist'});
+        colour={[0 0 0], [1 1 1], [0.6 0.6 0.6]};
+        barplot(T.phase, T.dist, 'split', T.phase, 'facecolor', colour)
+        ylabel('Crossnobis dissimilarity pwh')
         xticklabels({'Prep', 'Prod', 'Cross'})
         title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
         %-------------------------------------------------------------------------------%
@@ -5651,17 +5971,19 @@ switch(what)
         
         labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
         
-        %%%Multi-dimensional scaling - Second Moment Matrix
+        %%%Second Moment Matrix
         for s=1:length(A.data)%for iter
             G_hat(:,:,s)= A.G{s}; %extract second moment matrix
+            G_hatP(:,:,s)= AP.G{s}; %extract second moment matrix
         end%forIter
         Gm = mean(G_hat,3); % Mean estimate
+        GmP = mean(G_hatP,3); % Mean estimate
         
         figure%%%RDM
         %subplot(1,2,1);
         ind=indicatorMatrix('allpairs', 1:length(Gm)); %indicator matrix for all pairwise distances (k*(k-1))
         imagesc(rsa.rdm.squareRDM(diag(ind*Gm*ind'))); %display
-        %multiplying variance/covariance (second moment matrix) by 
+        %multiplying variance/covariance (second moment matrix) by
         %indicator matrix results in dissimilarity values (crossnobis)
         title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
         xticks(1:8)
@@ -5669,26 +5991,877 @@ switch(what)
         yticks(1:8)
         yticklabels(labels)
         
-        try
-            figure %%%MDS for each subcortical region
-            C= pcm_indicatorMatrix('allpairs',(1:length(Gm))');
-            %C = [1 0 -1 0];
-            %C = [1 1 -1 -1 1 1 -1 -1];
-            [COORD,~]=pcm_classicalMDS(Gm,'contrast',C);
-            plot(COORD(:,1),COORD(:,2),'o');
-            text(COORD(:,1),COORD(:,2),labels ,'VerticalAlignment','bottom','HorizontalAlignment','center')
-            %axis equal;
-            title('Multi-dimensional scaling')
-        catch
-            disp('MDS Failed.')
+        figure%%%RDM
+        %subplot(1,2,1);
+        ind=indicatorMatrix('allpairs', 1:length(GmP)); %indicator matrix for all pairwise distances (k*(k-1))
+        imagesc(rsa.rdm.squareRDM(diag(ind*GmP*ind'))); %display
+        %multiplying variance/covariance (second moment matrix) by
+        %indicator matrix results in dissimilarity values (crossnobis)
+        title(['Prewhitened: prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
+        xticks(1:8)
+        xticklabels(labels);%p=prep, P=prod
+        yticks(1:8)
+        yticklabels(labels)
+        %-------------------------------------------------------------------------------%
+        
+        
+        figure%%%MDS
+        GRegion = cat(3,A.G{:}); %extract region variance/covariance matrices
+        GRegionP = cat(3,AP.G{:}); %extract region variance/covariance matrices
+        lc=1;
+        for j=1:length(GRegion) %get MDS for each subj in the region
+            [SubjCOORD(:,:,lc),~] = pcm_classicalMDS(GRegion(:,:,lc));
+            [SubjCOORDP(:,:,lc),~] = pcm_classicalMDS(GRegionP(:,:,lc));
+            lc = lc+1;
+        end
+        COORD = mean(SubjCOORD, 3);
+        COORDP = mean(SubjCOORDP, 3);
+        xCoord = COORD(1:end,2);%PC2
+        yCoord = COORD(1:end,3);%PC3
+        zCoord = COORD(1:end,1);%PC1
+        %3D scatter plot
+        scatterplot3(xCoord,yCoord,zCoord,'split',spl, ... %here we plot PC 2&3 first because
+            'markersize',ms, 'markercolor',rsaGB, 'markerfill',rsaGB, 'label',label);%PC 1 is just activity differences
+        %%%Draw coloured lines between distinct order & timing conditions
+        %Prep
+        colors = decodeBRG{1}; %blue for order
+        indx=[1 3]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        indx=[2 4]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        colors = decodeBRG{2}; %red for timing
+        indx=[1 2]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        indx=[3 4]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        %Prod
+        colors = decodeBRG{1}; %blue for order
+        indx=[5 7]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        indx=[6 8]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        colors = decodeBRG{2}; %red for timing
+        indx=[5 6]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        indx=[7 8]';
+        line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+        
+        grid off
+        hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
+        % now draw the vertical errorbar for each point
+        eCoord = std(SubjCOORD,[],3);%stdev
+        ex = eCoord(1:end,2)/sqrt(length(eCoord(1:end,2)));%standard error to plot
+        ey = eCoord(1:end,3)/sqrt(length(eCoord(1:end,3)));
+        ez = eCoord(1:end,1)/sqrt(length(eCoord(1:end,1)));
+        for i=1:length(COORD(1:end,2))%for length of PC2 vector
+            xV = [xCoord(i); xCoord(i)];
+            yV = [yCoord(i); yCoord(i)];
+            zV = [zCoord(i); zCoord(i)];
+            
+            xMin = xCoord(i) + ex(i);
+            xMax = xCoord(i) - ex(i);
+            yMin = yCoord(i) + ey(i);
+            yMax = yCoord(i) - ey(i);
+            zMin = zCoord(i) + ez(i);
+            zMax = zCoord(i) - ez(i);
+            
+            xB = [xMin, xMax];
+            yB = [yMin, yMax];
+            zB = [zMin, zMax];
+            
+            % draw error bars
+            h=plot3(xV, yV, zB, '-k');
+            set(h, 'LineWidth', 2);
+            h=plot3(xB, yV, zV, '-k');
+            set(h, 'LineWidth', 2);
+            h=plot3(xV, yB, zV, '-k');
+            set(h, 'LineWidth', 2);
+        end
+        
+        hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
+        %axis equal
+        title('multi-dimensional scaling')
+        %xlim([-0.035, 0.035])
+        %ylim([-0.027, 0.029])
+        %zlim([-0.02, 0.3])
+        view(30,30)
+        
+        
+        %3D scatter plot - prewhitened
+        figure
+        xCoordP = COORDP(1:end,2);%PC2
+        yCoordP = COORDP(1:end,3);%PC3
+        zCoordP = COORDP(1:end,1);%PC1
+        %3D scatter plot
+        scatterplot3(xCoordP,yCoordP,zCoordP,'split',spl, ... %here we plot PC 2&3 first because
+            'markersize',ms, 'markercolor',rsaGB, 'markerfill',rsaGB, 'label',label);%PC 1 is just activity differences
+        %%%Draw coloured lines between distinct order & timing conditions
+        %Prep
+        colors = decodeBRG{1}; %blue for order
+        indx=[1 3]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        indx=[2 4]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        colors = decodeBRG{2}; %red for timing
+        indx=[1 2]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        indx=[3 4]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        %Prod
+        colors = decodeBRG{1}; %blue for order
+        indx=[5 7]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        indx=[6 8]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        colors = decodeBRG{2}; %red for timing
+        indx=[5 6]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        indx=[7 8]';
+        line(COORDP(indx,2),COORDP(indx,3),COORDP(indx,1),'color',colors, 'linewidth',lw);
+        
+        grid off
+        hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
+        % now draw the vertical errorbar for each point
+%         eCoordP = std(SubjCOORDP,[],3);%stdev
+%         ex = eCoordP(1:end,2)/sqrt(length(eCoordP(1:end,2)));%standard error to plot
+%         ey = eCoordP(1:end,3)/sqrt(length(eCoordP(1:end,3)));
+%         ez = eCoordP(1:end,1)/sqrt(length(eCoordP(1:end,1)));
+%         for i=1:length(COORD(1:end,2))%for length of PC2 vector
+%             xV = [xCoordP(i); xCoordP(i)];
+%             yV = [yCoordP(i); yCoordP(i)];
+%             zV = [zCoordP(i); zCoordP(i)];
+%             
+%             xMin = xCoordP(i) + ex(i);
+%             xMax = xCoordP(i) - ex(i);
+%             yMin = yCoordP(i) + ey(i);
+%             yMax = yCoordP(i) - ey(i);
+%             zMin = zCoordP(i) + ez(i);
+%             zMax = zCoordP(i) - ez(i);
+%             
+%             xB = [xMin, xMax];
+%             yB = [yMin, yMax];
+%             zB = [zMin, zMax];
+%             
+%             % draw error bars
+%             h=plot3(xV, yV, zB, '-k');
+%             set(h, 'LineWidth', 2);
+%             h=plot3(xB, yV, zV, '-k');
+%             set(h, 'LineWidth', 2);
+%             h=plot3(xV, yB, zV, '-k');
+%             set(h, 'LineWidth', 2);
+%         end
+        
+        hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
+        %axis equal
+        title('prewhitened multi-dimensional scaling')
+        %xlim([-0.035, 0.035])
+        %ylim([-0.027, 0.029])
+        %zlim([-0.02, 0.3])
+        view(30,30)
+        
+    case 'subAndCB_snr_ratio' %calculate signal to noise ratio for each region, to match later simulations
+        
+        regNames = {'lTha', 'lCau', 'lPut', 'lHip', 'rHip', 'rLob4', 'rLob5'};
+        
+        if ~exist(fullfile(simuDir, 'snr_regions.mat'),'file')
+            %%%Regions to load
+            %lTha   %lCau   %lPut   %lHip   %rHip
+            targetSubNums  = [ 1       2       3       4       8    ];
+            %rLob4   %rLob5
+            targetCBNums   = [ 2        4     ];
+            
+            
+            %%%Subcortical ----------------------------------------------------
+            %%%Load
+            dataFile = fullfile(roiSubDir, 'preWhitened_betas.mat');
+            Sub = load(dataFile, 'snr', 'betaW', 'region', 'SN');%load it
+            
+            mask = ismember(Sub.region, targetSubNums); %remove non-target regions
+            names = fieldnames(Sub);
+            for i=1:numel(names)
+                Sub.(names{i})(~mask) = [];
+            end
+            Sub.region(Sub.region == 8) = 5; %change rHip to region 5 for plotting
+            
+            %%%Cerebellum -----------------------------------------------------
+            %%%Load
+            dataFile = fullfile(roiCbDir, 'preWhitened_betas.mat');
+            CB = load(dataFile, 'snr', 'betaW', 'region', 'SN');%load it
+            
+            mask = ismember(CB.region, targetCBNums); %remove non-target regions
+            names = fieldnames(CB);
+            for i=1:numel(names)
+                CB.(names{i})(~mask) = [];
+            end
+            CB.region(CB.region == 2) = 6; %change rLob4 to region 6 for plotting
+            CB.region(CB.region == 4) = 7; %change rLob5 to region 7 for plotting
+            
+            R = addstruct(Sub, CB); %concatenate subcortical & CB
+            clear('Sub','CB')
+            
+            R.nVox = cell2mat(cellfun(@length,R.betaW,'uni',false));
+            R = rmfield(R, 'betaW');
+            %save
+            save(fullfile(simuDir, 'snr_regions.mat'), 'R')
+        else
+            load(fullfile(simuDir, 'snr_regions.mat'),'R')
+        end
+        
+        figure %plot signal to noise ratio for all regions
+        subplot(1,2,1)
+        myboxplot(R.region, R.snr, 'xtickoff');
+        ylabel('Signal to noise ratio')
+        xticklabels(regNames)
+        
+        subplot(1,2,2)
+        myboxplot(R.region, R.nVox, 'xtickoff');
+        ylabel('Number of voxels')
+        xticklabels(regNames)
+    case 'simulations_regional' %simulates and analyses activity patterns with snr matched to target subcortical regions - slow!
+        
+        %%%Runs 1000 iterations by default, so takes some time. Change 
+        %%%varargin 'nIter' to a lower number if needed.
+        
+        %%%Load signal to noise ratios for target regions
+        %%%Generated by case 'subAndCB_snr_ratio'
+        load(fullfile(simuDir, 'snr_regions.mat'), 'R')
+        R=tapply(R,{'region', 'SN', 'nVox', 'snr'},{'snr', 'mean', 'name', 'snr'});%just to reorder to region first
+        Rmean = tapply(R,{'region'},{'snr', 'mean', 'name', 'snr'},{'nVox','mean','name','nVox'});
+        Rmean.nVox = round(Rmean.nVox);
+        
+        %%%Load percent signal change to use as prodscaling variable
+        %                  lTha    lCau    lPut    lHip    rHip
+        targetSubNums  = [ 1       2       3       4       8    ];
+        %                  rLob4    rLob5
+        targetCBNums   = [ 2        4     ];
+        
+        %subcortical
+        load(fullfile(rsaDir, 'subcortical', 'subRoiDistances.mat'), 'Rperc')
+        subRperc = tapply(Rperc,{'region','SN','phase'},{'perc','mean','name','perc'});
+        mask = ismember(subRperc.region, targetSubNums); %remove non-target regions
+        names = fieldnames(subRperc);
+        for i=1:numel(names)
+            subRperc.(names{i})(~mask) = [];
+        end
+        subRperc.region(subRperc.region == 8) = 5; %change rHip to region 5 for plotting
+        clear Rperc
+        
+        %Cerebellum
+        load(fullfile(rsaDir, 'cerebellum', 'cbRoiDistances.mat'), 'Rperc')
+        cbRperc = tapply(Rperc,{'region','SN','phase'},{'perc','mean','name','perc'});
+        mask = ismember(cbRperc.region, targetCBNums); %remove non-target regions
+        names = fieldnames(cbRperc);
+        for i=1:numel(names)
+            cbRperc.(names{i})(~mask) = [];
+        end
+        cbRperc.region(cbRperc.region == 2) = 6; %change rLob4 to region 6 for plotting
+        cbRperc.region(cbRperc.region == 4) = 7; %change rLob5 to region 7 for plotting
+        
+        Rperc = addstruct(subRperc, cbRperc); %concatenate subcortical & CB
+        clear('subRperc','cbRperc')
+        
+        %Calculate scaling factor to increase/decrease production by
+        Rperctemp   = tapply(Rperc,{'region','phase'},{'perc','mean','name','perc'});
+        prodscaling = Rperctemp.perc(Rperctemp.phase == 2) - Rperctemp.perc(Rperctemp.phase == 1); %prep-prod diff
+        
+        regNames = {'lTha', 'lCau', 'lPut', 'lHip', 'rHip', 'rLob4', 'rLob5'};%change accordingly
+        
+        %Other input options that can alternatively be specified by user
+        prepProd    = 0;         %0: prep = prod, 1: prep ~= prod
+        vord        = [0.0005 0.0005];    %distance between two orders - provide two values if prepProd == 1
+        vtemp       = [0.0005 0.0005];    %distance between two timings - provide two values if prepProd == 1
+        vinter      = [0.0005 0.0005];    %distance between four sequences - provide two values if prepProd == 1
+        nIter       = 1000;       %iterations of simulation
+        vararginoptions(varargin,{'prepProd','prodscaling','vord','vtemp','vinter','nIter'});
+        
+        A=[]; A.data=[]; AP.data=[]; A.snr=[]; A.tgtSnr=[]; A.vnoise=[]; A.region=[]; AP.region=[]; A.SN=[]; AP.SN=[]; %data struct
+        A.G=[]; AP.G=[]; A.d=[]; A.Sig=[]; AP.d=[]; AP.Sig=[]; A.prepAccuracy=[]; A.prodAccuracy=[]; 
+        B=[]; %output struct - stores distances, LDA, G matrix
+        D=[]; %raw data store
+        
+        %%%Prepare condition and partition (run) vectors
+        nrruns = 6; nCond = 8;
+        runC      = repmat(1:nrruns,nCond,1); %labelling runs 1:6 (imaging runs)
+        runC      = reshape(runC,1,[])';
+        condC     = repmat((1:nCond)', nrruns, 1); %labelling conditions 1:4 (sequences)
+        
+        for r=1:length(Rmean.region)%for region
+            for i=1:nIter%for 'subj'
+                [Y, Y_hat, ~, snr, tgtSnr, noise] = prepProdSimu_makedataPP_region(Rmean.nVox(r), Rmean.snr(r), 'prepProd',prepProd,'prodscaling',prodscaling(r),...
+                    'vord',vord,'vtemp',vtemp,'vinter',vinter);
+                
+                A.data{end+1}      = Y;
+                AP.data{end+1}     = Y_hat;
+                A.snr(end+1,:)     = snr;
+                A.tgtSnr(end+1,:)  = tgtSnr;
+                A.vnoise(end+1,:)  = noise;
+                A.region(end+1,:)  = r;
+                AP.region(end+1,:) = r;
+                A.SN(end+1,:)      = i;
+                AP.SN(end+1,:)     = i;
+                
+                %%%Second moment matrix
+                [A.G{end+1,1},~]    = pcm_estGCrossval(A.data{end},runC,condC);
+                [AP.G{end+1,1},~]   = pcm_estGCrossval(AP.data{end},runC,condC);
+                
+                %%%Distances
+                [A.d{end+1},     A.Sig{end+1}]     = rsa.distanceLDC(A.data{end}, runC, condC);
+                [AP.d{end+1},    AP.Sig{end+1}]    = rsa.distanceLDC(AP.data{end}, runC, condC);
+                
+                %%%Linear decoding
+                prepData = [A.data{end}(1:4,:); A.data{end}(9:12,:);  A.data{end}(17:20,:); A.data{end}(25:28,:); A.data{end}(33:36,:); A.data{end}(41:44,:)];
+                prodData = [A.data{end}(5:8,:); A.data{end}(13:16,:); A.data{end}(21:24,:); A.data{end}(29:32,:); A.data{end}(37:40,:); A.data{end}(45:48,:)];
+                
+                %               accuracy columns
+                %1: order,            2: timing,           3:integrated
+                [A.prepAccuracy(end+1,1), A.prepAccuracy(end+1,2), A.prepAccuracy(end+1,3)] = prepProdSimu_classify(prepData);
+                [A.prodAccuracy(end+1,1), A.prodAccuracy(end+1,2), A.prodAccuracy(end+1,3)] = prepProdSimu_classify(prodData);
+            end%for 'subj'
+        end%for region
+        
+        figure %plot signal to noise ratio for all regions
+        subplot(1,2,1)
+        myboxplot(R.region, R.snr, 'xtickoff');
+        ylabel('Empirical signal to noise ratio')
+        ylim([0 0.7])
+        xticklabels(regNames)
+        
+        subplot(1,2,2)
+        myboxplot(A.region, A.snr, 'xtickoff');
+        ylabel('Simulated signal to noise ratio')
+        ylim([0 0.7])
+        xticklabels(regNames)
+        %-------------------------------------------------------------------------------%
+        
+        
+        %%%Distances
+        phaseVector = [...%index (1s are where phase is different)
+            1 1 1 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0; ...%prep
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1; ...%prod
+            0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0  ...%cross
+            ];
+        %Loop over subjs, conditions, and phases, and store distances as
+        %struct to plot later
+        loopCounter = 1;
+        for r=unique(A.region)'%for region
+            Atemp = A.d(A.region == r);
+            APtemp = AP.d(A.region == r);
+            for s=1:nIter%for subj
+                for i=1:size(phaseVector, 1)%for phase
+                    B.dist(loopCounter,1)   = mean(Atemp{s}(phaseVector(i,:) == 1));
+                    B.phase(loopCounter,1)  = i;
+                    B.cond(loopCounter,1)   = 1;
+                    B.sn(loopCounter,1)     = s;
+                    B.region(loopCounter,1) = r;
+                    BP.dist(loopCounter,1)   = mean(APtemp{s}(phaseVector(i,:) == 1));
+                    BP.phase(loopCounter,1)  = i;
+                    BP.cond(loopCounter,1)   = 1;
+                    BP.sn(loopCounter,1)     = s;
+                    BP.region(loopCounter,1) = r;
+                    loopCounter = loopCounter + 1;
+                end%for phase
+            end%for subj
+        end%for region
+        
+        
+        %%% Decoding
+        loopCounter = 1;
+        for r=unique(A.region)'%for region
+            APrepTemp = A.prepAccuracy(A.region == r,:);
+            AProdTemp = A.prodAccuracy(A.region == r,:);
+            for s=1:nIter%for subj
+                for i=1:size([APrepTemp; AProdTemp], 2)%for cond
+                    C.acc(loopCounter,1)    = APrepTemp(s, i);
+                    C.phase(loopCounter,1)  = 1;%prep
+                    C.cond(loopCounter,1)   = i;
+                    C.sn(loopCounter,1)     = s;
+                    C.region(loopCounter,1) = r;
+                    loopCounter = loopCounter + 1;
+                    
+                    C.acc(loopCounter,1)    = AProdTemp(s, i);
+                    C.phase(loopCounter,1)  = 2;%prod
+                    C.cond(loopCounter,1)   = i;
+                    C.sn(loopCounter,1)     = s;
+                    C.region(loopCounter,1) = r;
+                    loopCounter = loopCounter + 1;
+                end%for cond
+            end%for subj
+        end%for region
+        
+        %%%Plot - Prepare variables
+        %Colour      %Blue(ord)         %Red(tim)               %Green(int)
+        decodeBRG = {[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+        rsaGB     = {[0.8 0.8 0.8], [0 0 0]};
+        
+        %Style
+        spl = [zeros(4,1); ones(4,1)];
+        label = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
+        ms = 12;
+        ls = 20;
+        lw = 3;
+        
+        %y axis scales
+        pscY     = [-0.12,  0.7];
+        rsaY     = [-0.003, 0.0045];
+        ldaY     = [-1.52,  2];
+        crossY   = [0,      0.11];
+        mdsDistY = [0       0.07];
+        
+        
+        %%%Plot - do plotting
+        figure %%% Distances
+        for r=unique(B.region')
+            subplot(4,2,r)
+            T = tapply(B,{'sn', 'phase'},{'dist', 'mean', 'name', 'dist'},'subset', B.region == r);
+            colour={[0 0 0], [1 1 1], [0.6 0.6 0.6]};
+            barplot(T.phase, T.dist, 'split', T.phase, 'facecolor', colour);
+            ylabel('Crossnobis dissimilarity')
+            xticklabels({'Prep', 'Prod', 'Cross'})
+            if r==1
+                xlabel(['pP =', num2str(prepProd), ' iter=', num2str(nIter), ' ORD=',num2str(vord), ' TIM=',num2str(vtemp), ' INT=',num2str(vinter), ' NOISE=',num2str(A.vnoise(1))]);
+            end
+            title(regNames{r});
+        end
+        
+        figure %%% Distances prewhitened
+        for r=unique(BP.region')
+            subplot(4,2,r)
+            T = tapply(BP,{'sn', 'phase'},{'dist', 'mean', 'name', 'dist'},'subset', B.region == r);
+            colour={[0 0 0], [1 1 1], [0.6 0.6 0.6]};
+            barplot(T.phase, T.dist, 'split', T.phase, 'facecolor', colour);
+            ylabel('Crossnobis dissimilarity prewhitened')
+            xticklabels({'Prep', 'Prod', 'Cross'})
+            if r==1
+                xlabel(['pP =', num2str(prepProd), ' iter=', num2str(nIter), ' ORD=',num2str(vord), ' TIM=',num2str(vtemp), ' INT=',num2str(vinter), ' NOISE=',num2str(A.vnoise(1))]);
+            end
+            title(regNames{r});
+        end
+        %-------------------------------------------------------------------------------%
+        
+        figure %%% Decoding
+        for r=unique(C.region')
+            subplot(4,2,r)
+            T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'},'subset', B.region == r);
+            colour={[0 0.4470 0.7410], [0.6350 0.0780 0.1840], [0.4660 0.6740 0.1880]};
+            barplot([T.phase, T.cond], T.acc, 'split', T.cond, 'facecolor', colour);
+            ylabel('Decoding accuracy')
+            xticklabels({'Ord prep', 'Tim prep', 'Int prep', 'Ord prod', 'Tim prod', 'Int prod'})
+            if r==1
+                xlabel(['pP =', num2str(prepProd), ' iter=', num2str(nIter), ' ORD=',num2str(vord), ' TIM=',num2str(vtemp), ' INT=',num2str(vinter), ' NOISE=',num2str(A.vnoise(1))]);
+            end
+            title(regNames{r});
+        end
+        %-------------------------------------------------------------------------------%
+        
+        
+        %%% RDMs and multi-dimensional scaling
+        labels = {'O1T1p', 'O1T2p', 'O2T1p', 'O2T2p', 'O1T1P', 'O1T2P', 'O2T1P', 'O2T2P'};%p=prep, P=prod
+        %Extract data
+        for s=1:length(A.G)%for subj * region
+            G(:,:,s)  = A.G{s}; %extract representational dissimilarity matrix into 3D matrix
+            GP(:,:,s) = AP.G{s}; %extract representational dissimilarity matrix into 3D matrix
+        end%for subj * region
+        
+        
+        figure%%%RDM
+        for i=unique(A.region')%plots left hem on the left, right hem on the right
+            
+            GRegion = G(:,:,A.region == i); %extract region variance/covariance matrices
+            GmRegion = mean(GRegion, 3); %mean across subjs
+            
+            subplot(4, 2, i) %%%RDM for each subcortical region
+            ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
+            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind'))); %display
+            %multiplying variance/covariance by indicator matrix results in
+            %dissimilarity values (crossnobis)
+            title([regNames{i} ' RDM (crossnobis)'])
+        end
+        figure %%%Prewhitened RDM
+        for i=unique(AP.region')%for region
+            
+            GRegion = GP(:,:,AP.region == i); %extract region variance/covariance matrices
+            GmRegion = mean(GRegion, 3); %mean across subjs
+            
+            subplot(4, 2, i) %%%RDM for each subcortical region
+            ind=indicatorMatrix('allpairs',1:8); %matrix for all pairwise distances (k*(k-1))
+            imagesc(rsa.rdm.squareRDM(diag(ind*GmRegion*ind'))); %display
+            %multiplying variance/covariance by indicator matrix results in
+            %dissimilarity values (crossnobis)
+            colorbar;
+            axis image
+            title([regNames{i} ' Prewhitened RDM (crossnobis)'])
         end
         %----------------------------------------------------------------------------------------------%
         
-        %T = tapply(C,{'sn', 'cond', 'phase'},{'acc', 'mean', 'name', 'acc'}, 'subset', C.phase == 1);
-        %barplot(T.cond,T.acc,'split',T.cond,'style_bold','leg',{'ovr', 'ord', 'temp' ,'inter'},'leglocation','north');
-        %title(['prepProd =', num2str(prepProd), '  iter=', num2str(nIter), '  ORD=',num2str(vord), '  TEMP=',num2str(vtemp), '  INTER=',num2str(vinter), '  NOISE=',num2str(vnoise)]);
-        %ylabel('acc');
-        %xlabel('factor');
+        
+        %%%Multi-dimensional scaling
+        figure %plot MDS
+        for r=unique(A.region')%for region
+            %figure %plot MDS
+            subplot(4,2,r)
+            GRegion = G(:,:,A.region == r); %extract region variance/covariance matrices
+            for j=1:length(GRegion) %get MDS for each subj in the region
+                [SubjCOORD(:,:,j),~] = pcm_classicalMDS(GRegion(:,:,j));
+            end
+            COORD = mean(SubjCOORD, 3);
+            %COORDP = mean(SubjCOORDP, 3);
+            xCoord = COORD(1:end,2);%PC2
+            yCoord = COORD(1:end,3);%PC3
+            zCoord = COORD(1:end,1);%PC1
+            %3D scatter plot
+            scatterplot3(COORD(1:end,2),COORD(1:end,3),COORD(1:end,1),'split',spl, ... %here we plot PC 2&3 first because
+                'markersize',ms, 'markercolor',rsaGB, 'markerfill',rsaGB, 'label',label);%PC 1 is just activity differences
+            
+            %%%Draw coloured lines between distinct order & timing conditions
+            %Prep
+            colors = decodeBRG{1}; %blue for order
+            indx=[1 3]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[2 4]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            colors = decodeBRG{2}; %red for timing
+            indx=[1 2]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[3 4]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            
+            %Prod
+            colors = decodeBRG{1}; %blue for order
+            indx=[5 7]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[6 8]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            colors = decodeBRG{2}; %red for timing
+            indx=[5 6]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[7 8]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            
+            grid off
+            hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
+%             % now draw the vertical errorbar for each point
+%             eCoord = std(SubjCOORD,[],3);%stdev
+%             ex = eCoord(1:end,2)/sqrt(length(eCoord(1:end,2)));%standard error to plot
+%             ey = eCoord(1:end,3)/sqrt(length(eCoord(1:end,3)));
+%             ez = eCoord(1:end,1)/sqrt(length(eCoord(1:end,1)));
+%             for i=1:length(COORD(1:end,2))%for length of PC2 vector
+%                 xV = [xCoord(i); xCoord(i)];
+%                 yV = [yCoord(i); yCoord(i)];
+%                 zV = [zCoord(i); zCoord(i)];
+%                 
+%                 xMin = xCoord(i) + ex(i);
+%                 xMax = xCoord(i) - ex(i);
+%                 yMin = yCoord(i) + ey(i);
+%                 yMax = yCoord(i) - ey(i);
+%                 zMin = zCoord(i) + ez(i);
+%                 zMax = zCoord(i) - ez(i);
+%                 
+%                 xB = [xMin, xMax];
+%                 yB = [yMin, yMax];
+%                 zB = [zMin, zMax];
+%                 
+%                 % draw error bars
+%                 h=plot3(xV, yV, zB, '-k');
+%                 set(h, 'LineWidth', 2);
+%                 h=plot3(xB, yV, zV, '-k');
+%                 set(h, 'LineWidth', 2);
+%                 h=plot3(xV, yB, zV, '-k');
+%                 set(h, 'LineWidth', 2);
+%             end%for length of PC2 vector
+            hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
+            %axis equal
+            title([regNames{r} ' MDS'])
+            %ylim([-0.03, 0.04])
+            %xlim([-0.02, 0.16])
+            view(30,30)
+        end%for region
+        
+        %%%Pre-whitened
+        %figure %plot MDS
+        for r=unique(AP.region')%for region
+            %subplot(4,2,r)
+            figure %plot MDS
+            GRegion = GP(:,:,AP.region == r); %extract region variance/covariance matrices
+            for j=1:length(GRegion) %get MDS for each subj in the region
+                [SubjCOORD(:,:,j),~] = pcm_classicalMDS(GRegion(:,:,j));
+            end
+            COORD = mean(SubjCOORD, 3);
+            %COORDP = mean(SubjCOORDP, 3);
+            xCoord = COORD(1:end,2);%PC2
+            yCoord = COORD(1:end,3);%PC3
+            zCoord = COORD(1:end,1);%PC1
+            %3D scatter plot
+            scatterplot3(COORD(1:end,2),COORD(1:end,3),COORD(1:end,1),'split',spl, ... %here we plot PC 2&3 first because
+                'markersize',ms, 'markercolor',rsaGB, 'markerfill',rsaGB, 'label',label);%PC 1 is just activity differences
+            
+            %%%Draw coloured lines between distinct order & timing conditions
+            %Prep
+            colors = decodeBRG{1}; %blue for order
+            indx=[1 3]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[2 4]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            colors = decodeBRG{2}; %red for timing
+            indx=[1 2]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[3 4]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            
+            %Prod
+            colors = decodeBRG{1}; %blue for order
+            indx=[5 7]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[6 8]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            colors = decodeBRG{2}; %red for timing
+            indx=[5 6]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            indx=[7 8]';
+            line(COORD(indx,2),COORD(indx,3),COORD(indx,1),'color',colors, 'linewidth',lw);
+            
+            grid off
+            hold on; plot3(0,0,0,'+','MarkerFaceColor', [0 0 0],'MarkerEdgeColor',[0 0 0],'MarkerSize',ms+3, 'LineWidth',lw);
+%             % now draw the vertical errorbar for each point
+%             eCoord = std(SubjCOORD,[],3);%stdev
+%             ex = eCoord(1:end,2)/sqrt(length(eCoord(1:end,2)));%standard error to plot
+%             ey = eCoord(1:end,3)/sqrt(length(eCoord(1:end,3)));
+%             ez = eCoord(1:end,1)/sqrt(length(eCoord(1:end,1)));
+%             for i=1:length(COORD(1:end,2))%for length of PC2 vector
+%                 xV = [xCoord(i); xCoord(i)];
+%                 yV = [yCoord(i); yCoord(i)];
+%                 zV = [zCoord(i); zCoord(i)];
+%                 
+%                 xMin = xCoord(i) + ex(i);
+%                 xMax = xCoord(i) - ex(i);
+%                 yMin = yCoord(i) + ey(i);
+%                 yMax = yCoord(i) - ey(i);
+%                 zMin = zCoord(i) + ez(i);
+%                 zMax = zCoord(i) - ez(i);
+%                 
+%                 xB = [xMin, xMax];
+%                 yB = [yMin, yMax];
+%                 zB = [zMin, zMax];
+%                 
+%                 % draw error bars
+%                 h=plot3(xV, yV, zB, '-k');
+%                 set(h, 'LineWidth', 2);
+%                 h=plot3(xB, yV, zV, '-k');
+%                 set(h, 'LineWidth', 2);
+%                 h=plot3(xV, yB, zV, '-k');
+%                 set(h, 'LineWidth', 2);
+%             end%for length of PC2 vector
+            hold off; xlabel('PC 2'); ylabel('PC 3'); zlabel('PC 1'); set(gca,'fontsize',12);
+            %axis equal
+            title([regNames{r} ' MDS prewhitened pP ' num2str(prepProd)])
+            %ylim([-0.03, 0.04])
+            %xlim([-0.02, 0.16])
+            view(30,30)
+        end%for region
+        %-------------------------------------------------------------------------------%
+        
+        %%%Calculate euclidean distances
+        eucPcDist=[]; A.simEucDist = nan(length(A.SN),1); A.simEucScaling = nan(length(A.SN),1);
+        for i=unique(A.region)'
+            COORD = [];
+            GRegion = G(:,:,A.region == i); %extract region variance/covariance matrices
+            
+            for j=1:length(GRegion) %get MDS for each subj in the region
+                [COORD(:,:,j),~] = pcm_classicalMDS(GRegion(:,:,j));
+            end
+            
+            PCs = COORD(:,2:3,:); %PCs 2 and 3
+            
+            %Euclidean distance between phases within sequences for PC2
+            %and PC3
+            for j=1:length(PCs)%for subjs
+                for k=1:4%for within-sequence prep vs prod
+                    eucPcDist(k) = pdist([PCs(k,:,j)' PCs(k+4,:,j)'], 'euclidean');
+                end
+                
+                %Calculate the size of the quadrangle for prep and prod to
+                %normalise the distance between phases despite ord temp
+                %and int increases or decreases
+                
+                %pairwise distance measures k(k-1) / 2
+                prepDists(1) = pdist([PCs(1,:,j)', PCs(2,:,j)'],'euclidean');
+                prepDists(2) = pdist([PCs(1,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(3) = pdist([PCs(1,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(4) = pdist([PCs(2,:,j)', PCs(3,:,j)'],'euclidean');
+                prepDists(5) = pdist([PCs(2,:,j)', PCs(4,:,j)'],'euclidean');
+                prepDists(6) = pdist([PCs(3,:,j)', PCs(4,:,j)'],'euclidean');
+                
+                prodDists(1) = pdist([PCs(5,:,j)', PCs(6,:,j)'],'euclidean');
+                prodDists(2) = pdist([PCs(5,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(3) = pdist([PCs(5,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(4) = pdist([PCs(6,:,j)', PCs(7,:,j)'],'euclidean');
+                prodDists(5) = pdist([PCs(6,:,j)', PCs(8,:,j)'],'euclidean');
+                prodDists(6) = pdist([PCs(7,:,j)', PCs(8,:,j)'],'euclidean');
+                %%%FIND A BETTER WAY TO CODE THIS ^
+                
+                prepSize = mean(prepDists);
+                prodSize = mean(prodDists);
+                avgSize  = mean([prepSize, prodSize]);
+                
+                %Collect variables to later add to RDist
+                A.simEucDist(A.region == i & A.SN == j,:)    = mean(eucPcDist);
+                A.simEucScaling(A.region == i & A.SN == j,:) = avgSize;
+            end
+        end
+        A.simEucDistScaled = (A.simEucDist ./ A.simEucScaling) * 100;
+        
+        R = A; clear A; %convert to R struct
+        R.data = AP.data; %replace regular data with prewhitened data
+        R.G    = AP.G;
+        R.d    = AP.d;
+        R.Sig  = AP.Sig;
+        
+        %add input specifications for reference
+        R.prepProd = prepProd;
+        R.vord     = vord;
+        R.vtemp    = vtemp;
+        R.vinter   = vinter;
+        R.nIter    = nIter;
+        R.prodscaling = prodscaling;
+        
+        maintSwitch = {'maint', 'switch'}; %for filename, whether data switches or maints
+        sord = num2str(vord); stemp = num2str(vtemp); sinter = num2str(vinter); snIter = num2str(nIter);
+        
+        %save(fullfile(simuDir, ['simRoiEucDistances_' ...
+        %    maintSwitch{prepProd+1} '_O' sord '_T' stemp '_I' sinter '_N' snIter '.mat']), 'R')
+    case 'simu_empirical_regional_comparison'
+        %region names
+        subcortNames = {'lTha', 'lCau', 'lPut', 'lHip', 'rTha', 'rCau', 'rPut', 'rHip'};
+        CBnames      = {'lLob4', 'rLob4', 'lLob5', 'rLob5', 'lLob6', 'rLob6', 'lCru1', 'rCru1', 'lCru2', 'rCru2'};
+        targetSubNames = {'lTha', 'lCau', 'lPut', 'lHip', 'rHip'};
+        targetSubNums  = [ 1       2       3       4       8    ];
+        targetCBNames  = {'rLob4', 'rLob5'};
+        targetCBNums   = [ 2        4     ];
+        
+        targetRegNames = [targetSubNames, targetCBNames];
+        
+        %%%Load simulated data
+        simuDataFile = fullfile(simuDir, 'simRoiEucDistances_maint_O0.0005      0.0005_T0.0005      0.0005_I0.0005      0.0005_N1000.mat');
+        load(simuDataFile, 'R');
+        RsimuMaint = tapply(R,{'region', 'SN', 'simEucScaling','simEucDist'},{'simEucDistScaled', 'mean', 'name', 'distScaled'});
+        clear R
+        
+        simuDataFile = fullfile(simuDir, 'simRoiEucDistances_switch_O0.0005      0.0005_T0.0005      0.0005_I0.0005      0.0005_N1000.mat');
+        load(simuDataFile, 'R');
+        RsimuSwitch = tapply(R,{'region', 'SN', 'simEucScaling','simEucDist'},{'simEucDistScaled', 'mean', 'name', 'distScaled'});
+        clear R
+        
+        
+        %%%Subcortical ----------------------------------------------------
+        %%%Load
+        dataFile = fullfile(rsaDir, 'subcortical', 'subRoiDistances_withmds.mat');
+        load(dataFile, 'Rdist');%load it
+        
+        mask = ismember(Rdist.region, targetSubNums); %remove non-target regions
+        names = fieldnames(Rdist);
+        for i=1:numel(names)
+            Rdist.(names{i})(~mask) = [];
+        end
+        Rdist.region(Rdist.region == 8) = 5; %change rHip to region 5 for plotting
+        subDist = tapply(Rdist,{'region', 'SN', 'eucScaling'},{'dist', 'mean', 'name', 'dist'},'subset',Rdist.cond == 2);
+        clear Rdist
+        
+        %%%Cerebellum -----------------------------------------------------
+        %%%Load
+        dataFile = fullfile(rsaDir, 'cerebellum', 'cbRoiDistances_withmds.mat');
+        load(dataFile, 'Rdist');%load it
+        
+        mask = ismember(Rdist.region, targetCBNums); %remove non-target regions
+        names = fieldnames(Rdist);
+        for i=1:numel(names)
+            Rdist.(names{i})(~mask) = [];
+        end
+        Rdist.region(Rdist.region == 2) = 6; %change rLob4 to region 6 for plotting
+        Rdist.region(Rdist.region == 4) = 7; %change rLob5 to region 7 for plotting
+        CBdist = tapply(Rdist,{'region', 'SN', 'eucScaling'},{'dist', 'mean', 'name', 'dist'},'subset',Rdist.cond == 2);
+        %restricts to euclidean PC distance, excludes crossnobis ^
+        
+        %concatenate subcortical and CB distance structs
+        R = addstruct(subDist, CBdist);
+        
+        %calculate the scaled euclidean distance based on scaling variable
+        R.distScaled = (R.dist ./ R.eucScaling) * 100;
+        R            = rmfield(R, {'dist', 'eucScaling'});
+        R.distDiff   = nan(length(R.SN), 1);
+        
+        %%%Use simulations as baseline for one-sample tests
+        for i=unique(RsimuMaint.region)'%for region
+            baseDist(:,i)   = mean(RsimuMaint.distScaled(RsimuMaint.region == i));%calc maint base
+            switchDist(:,i) = mean(RsimuSwitch.distScaled(RsimuSwitch.region == i));%calc switch hypothetical
+            R.distDiff(R.region == i) = R.distScaled(R.region == i) - baseDist(i); %calc diff between scaled dist and baseline, for plot
+        end%for region
+        
+        
+        figure%Plot empirical region distances, with lines showing simulated levels
+        myboxplot(R.region, R.distScaled, 'xtickoff');
+        ylabel('Cross-phase Euclidean distance')
+        ylim([80 130])
+        xticklabels(targetRegNames)
+        
+        %draw horizontal lines at simulated maint and switch distances for each region
+        lineAxes = [0.7 1.3]; maintColour = ([64,224,208] / 255); switchColour = ([242,140,40] / 255);
+        for i=unique(RsimuMaint.region)'%for region
+            drawline(baseDist(i), 'dir', 'horz', ... %maint lines
+                'lim', lineAxes + (i-1), 'color', maintColour, 'linestyle', '-', 'linewidth', 2)
+            
+            drawline(switchDist(i), 'dir', 'horz', ... %switch lines
+                'lim', lineAxes + (i-1), 'color', switchColour, 'linestyle', '-', 'linewidth', 2)
+        end%for region
+        
+        %test significance of distance elevations
+        t = NaN(length(unique(R.region)') - 1,1); p = NaN(length(unique(R.region)') - 1,1);
+        for i = unique(R.region)'%for region
+            [h(i),p(i),ci{i},stats{i}] = ttest_RY(R.distScaled(R.region == i),baseDist(i));
+        end%for region
+        
+        astXLoc = 1:7; %x coordinates for the significance *s on plot
+        astYLoc = repelem(125, 7);
+        %display asterisks between sig results
+        text(astXLoc(p < .05),astYLoc(p < .05),'*','fontSize',20);
+        %disp(p)
+        %-----------------------------------------------------------------%
+        
+        
+        figure%Plot empirical region distances, with 0 being simulated level
+        myboxplot(R.region, R.distDiff, 'xtickoff');
+        ylabel('Cross-phase Euclidean distance')
+        ylim([-10 30])
+        xticklabels(targetRegNames)
+        drawline(0, 'dir', 'horz', 'linestyle', '- -')
+        
+        switchDistToBase = switchDist - baseDist;
+        for i=unique(RsimuMaint.region)'%for region
+            drawline(switchDistToBase(i), 'dir', 'horz', ... %switch lines
+                'lim', lineAxes + (i-1), 'color', switchColour, 'linestyle', '-', 'linewidth', 2)
+        end%for region
+        
+        %test significance of distance elevations
+        p = NaN(length(unique(R.region)') - 1,1);
+        for i = unique(R.region)'%for region
+            [h(i),p(i),ci{i},stats{i}] = ttest_RY(R.distDiff(R.region == i), 0, ...
+                'tail', 'right');
+            stats{i}.mean = mean(R.distDiff(R.region == i)); %mean of data
+            stats{i}.d    = stats{i}.mean / stats{i}.sd; %cohen's d for one sample
+            
+            p(i) = p(i) * 7; %bonferroni corrections for region
+            output = ['t(' num2str(stats{i}.df) ') = ' num2str(stats{i}.tstat) ', p = ' num2str(p(i)) ', d = ' num2str(stats{i}.d)];
+            disp(output)%display in commmand window
+        end%for region
+        
+        
+        
+        astXLoc = 1:7; %x coordinates for the significance *s on plot
+        astYLoc = repelem(28, 7);
+        %display asterisks between sig results
+        text(astXLoc(p < .05),astYLoc(p < .05),'*','fontSize',20);
+        %disp(p)
+        
+        
+        
         
 end%switch
 end%function
