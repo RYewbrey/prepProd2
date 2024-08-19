@@ -1,4 +1,4 @@
-function [zAcc_ovr, zAcc_ord, zAcc_temp, zAcc_int, zAcc_int_subtract]=prepProdSimu_classify(Y)
+function [zAcc_ord, zAcc_temp, zAcc_int, zAcc_int_subtract]=prepProdSimu_classify(Y)
 %outputs are z-scored accuracy
 
 %%%Regular Z-scoring (overall and if 2x2 subtraction issue is ignored in integrated)
@@ -13,10 +13,10 @@ Y=Y'; % transpose Y to have a p*n matrix instead of n*p (where n is trials and p
 
 %generate a row that indicates which run a trial
 %belongs to
-run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr
+run=[1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6]; % extract run nr;
 
 % make vector c with class labels corresponding to Y.
-c_ovrall=repmat(1:4,1,nr);%ignores unique 2x2 design pattern
+c_ovrall=repmat([1:4],1,nr);%ignores unique 2x2 design pattern
 c_ovrall_subtract=repmat([1 2 2 1],1,nr);%due to unique subtraction pattern that occurs with a 2x2 design
 
 %%% Generate column indices for cross-validation, where cell i contains
@@ -26,12 +26,8 @@ for i=1:nr
     train{i}=find(run~=i);  %fprintf('train:'); display(train{i}');
 end
 
-%%% Overall decoding %%%
-acc_ovr  = combinedclass(Y,c_ovrall,run,train,test);
-zAcc_ovr = (acc_ovr-mu)/sigma; %z_accuracy=(accuracy-mu)/sigma;
-
 %%% Integrated decoding %%%
-acc_int  = prepProd2_combinedclass_corrected4Main(Y,c_ovrall,run,train,test);
+acc_int = prepProd2_combinedclass_corrected4Main(Y,c_ovrall,run,train,test);
 zAcc_int = (acc_int-mu)/sigma; %z_accuracy=(accuracy-mu)/sigma;
 
 %%%Subtraction Z-scoring (if 2x2 subtraction issue addressed)
